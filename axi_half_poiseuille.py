@@ -177,7 +177,7 @@ print ' ---------'
 
 start_time = time()
 
-Kzz, Kzr, Krz, Krr, K, M, Mr, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
+Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
 
 
 end_time = time()
@@ -424,7 +424,7 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Linear'
    w_d = semi_lagrangian.Linear2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
    A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d)
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w))
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)

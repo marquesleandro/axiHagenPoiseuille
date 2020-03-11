@@ -210,6 +210,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
  K = sps.lil_matrix((_npoints,_npoints), dtype = float)
  M = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Mr = sps.lil_matrix((_npoints,_npoints), dtype = float)
+ M1r = sps.lil_matrix((_npoints,_npoints), dtype = float)
  MLump = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Gz   = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Gz1r = sps.lil_matrix((_npoints,_npoints), dtype = float)
@@ -245,6 +246,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    
      M[ii,jj] += element2D.mass[i][j]
      Mr[ii,jj] += r_ele*element2D.mass[i][j]
+     M1r[ii,jj] += (1.0/r_ele)*element2D.mass[i][j]
      MLump[ii,ii] += element2D.mass[i][j]
 
      Gz[ii,jj] += element2D.gx[i][j]
@@ -263,7 +265,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
   sys.exit()
 
 
- return Kzz, Kzr, Krz, Krr, K, M, Mr, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order
+ return Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order
 
 
 
