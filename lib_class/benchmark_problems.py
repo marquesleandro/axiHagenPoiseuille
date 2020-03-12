@@ -1229,8 +1229,13 @@ class axiHalf_Poiseuille:
     _self.ibc.append(v2)
 
    elif line == 10:
-    _self.bc_1[v1] = (_self.r[v1]**2)/2.0
-    _self.bc_1[v2] = (_self.r[v2]**2)/2.0
+   # _self.bc_1[v1] = (_self.r[v1]**2)/2.0
+   # _self.bc_1[v2] = (_self.r[v2]**2)/2.0
+
+    _self.bc_1[v1] = ((_self.r[v1]-1.0)**2)/2.0 #between pipes
+    _self.bc_1[v2] = ((_self.r[v2]-1.0)**2)/2.0 #between pipes
+
+
 
     _self.ibc.append(v1)
     _self.ibc.append(v2)
