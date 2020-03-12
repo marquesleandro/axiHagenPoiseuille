@@ -1047,6 +1047,135 @@ class Element2D:
 
 
 
+ def axisymmetric_linear(_self,_e):
+  _self.NUMNODE = 3  #Linear Triangular Element - 3 Nodes
+  
+  N = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+
+  dNdl1 = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  dNdl2 = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  
+  dxdl1 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  dxdl2 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  dydl1 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  dydl2 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+
+  dNdx = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  dNdy = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+
+  J = np.zeros([2,2], dtype = float)
+  jacobian = np.zeros([_self.NUMGAUSS,1], dtype = float)
+
+
+  # A loop is required for each pair of coordinates (l1,l2)
+  for k in range(0,_self.NUMGAUSS):
+    
+   # Area Coordinates
+   # Lewis pag. 67 Eq. 3.129
+   L1 = 1.0 - _self.GQPoints[k][0] - _self.GQPoints[k][1]   #L1 = 1 - l1 - l2
+   L2 = _self.GQPoints[k][0]                                #L2 = l1
+   L3 = _self.GQPoints[k][1]                                #L3 = l2
+
+   # Shape Functions
+   # Lewis pag. 67 Eq. 3.129
+   N[k][0] = L1  #N1 = L1
+   N[k][1] = L2  #N2 = L2
+   N[k][2] = L3  #N3 = L3
+
+   # Shape Functions Derivatives in respect to l1
+   dNdl1[k][0] = -1.0   #dN1/dl1
+   dNdl1[k][1] =  1.0   #dN2/dl1
+   dNdl1[k][2] =  0.0   #dN3/dl1
+
+   # Shape Functions Derivatives in respect to l2
+   dNdl2[k][0] = -1.0   #dN1/dl2
+   dNdl2[k][1] =  0.0   #dN2/dl2
+   dNdl2[k][2] =  1.0   #dN3/dl2
+
+   # Coordinate Transfomation
+   # Lewis pag. 64 Eq. 3.108 for 1D
+   # Lewis pag. 66 Eq. 3.121 for 2D
+   for i in range(0,_self.NUMNODE):
+    ii = _self.IEN[_e][i]
+    
+    dxdl1[k] += _self.x[ii]*dNdl1[k][i]   # dx/dl1 = x1*dN1/dl1 + x2*dN2/dl1 + x3*dN3/dl1 ...
+    dydl1[k] += _self.y[ii]*dNdl1[k][i]   # dy/dl1 = y1*dN1/dl1 + y2*dN2/dl1 + y3*dN3/dl1 ...
+    dxdl2[k] += _self.x[ii]*dNdl2[k][i]   # dx/dl2 = x1*dN1/dl2 + x2*dN2/dl2 + x3*dN3/dl2 ...
+    dydl2[k] += _self.y[ii]*dNdl2[k][i]   # dy/dl2 = y1*dN1/dl2 + y2*dN2/dl2 + y3*dN3/dl2 ...
+
+
+   # Jacobian Matrix
+   # Lewis pag. 66 Eq. 3.121
+   J[0][0] = dxdl1[k]
+   J[0][1] = dydl1[k]
+   J[1][0] = dxdl2[k]
+   J[1][1] = dydl2[k]
+
+   jacobian[k] = np.linalg.det(J)
+
+
+   # Shape Functions Derivatives in respect to x and y
+   # Lewis pag. 65 Eq. 3.116
+   for i in range(0,_self.NUMNODE):
+    dNdx[k][i] = (1.0/jacobian[k])*( dNdl1[k][i]*dydl2[k] - dNdl2[k][i]*dydl1[k])
+    dNdy[k][i] = (1.0/jacobian[k])*(-dNdl1[k][i]*dxdl2[k] + dNdl2[k][i]*dxdl1[k])
+
+
+
+  _self.mass = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.mr = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.m1r = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.kxx = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.kxy = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.kyx = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.kyy = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.gx = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.gx1r = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.gy = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.gy1r = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.dx = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  _self.dy = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+  
+
+  # Elementary Matrices
+  # P.S: It is divided by 2 due to relation 
+  # of parallelogram and triangle areas --> DxDy = (jacobian*Dl1*Dl2)/2
+  for k in range(0,_self.NUMGAUSS): 
+   
+   v1 = _self.IEN[_e][0]
+   v2 = _self.IEN[_e][1]
+   v3 = _self.IEN[_e][2]
+      
+   N[k][0] = L1  #N1 = L1
+   N[k][1] = L2  #N2 = L2
+   N[k][2] = L3  #N3 = L3
+
+   r_elem = N[k][0]*_self.y[v1] + N[k][1]*_self.y[v2] + N[k][2]*_self.y[v3]
+      
+   for i in range(0,_self.NUMNODE):
+    for j in range(0,_self.NUMNODE):
+    
+     _self.mass[i][j] += N[k][i]*N[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.mr[i][j] += r_elem*N[k][i]*N[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.m1r[i][j] += (1.0/r_elem)*N[k][i]*N[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+    
+     _self.kxx[i][j] += dNdx[k][i]*dNdx[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.kxy[i][j] += dNdx[k][i]*dNdy[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.kyx[i][j] += dNdy[k][i]*dNdx[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.kyy[i][j] += dNdy[k][i]*dNdy[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+    
+     _self.gx[i][j] += dNdx[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.gx1r[i][j] += (1.0/r_elem)*dNdx[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.gy[i][j] += dNdy[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.gy1r[i][j] += (1.0/r_elem)*dNdy[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+    
+     _self.dx[i][j] += dNdx[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+     _self.dy[i][j] += dNdy[k][j]*N[k][i]*jacobian[k]*_self.GQWeights[k]/2.0
+ 
+
+
+
+
 
 
  # Reference Analytic: Fundamentals of the Finite
@@ -1055,7 +1184,7 @@ class Element2D:
  #                     Seetharamu - pg. 196-200
  #                     For Q_elem pg. 126
  #                     For 1D pg. 193
- def analytic(_self, _e):
+ def analytic2D(_self, _e):
 
   i = _self.IEN[_e][0]
   j = _self.IEN[_e][1]
@@ -1106,7 +1235,7 @@ class Element2D:
 
 
 
- def axisymmetric(_self, _e):
+ def analytic_axi(_self, _e):
   _self.r = _self.y
   _self.z = _self.x
 

@@ -219,7 +219,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
 
 
  element2D = gaussian_quadrature.Element2D(_z, _r, _IEN, _GAUSSPOINTS)
-
+ 
  if _polynomial_option == 1:
   polynomial_order = 'Linear Element'
   
@@ -255,8 +255,71 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Gr1r[ii,jj] += (1.0/r_ele)*element2D.gy[i][j]
 
 
+# if _polynomial_option == 1:
+#  polynomial_order = 'Linear Element'
+#  
+#  for e in tqdm(range(0, _nelem)):
+#   element2D.axisymmetric_linear(e)
+#
+#   for i in range(0,_GL): 
+#    ii = _IEN[e][i]
+#  
+#   for j in range(0,_GL):
+#    jj = _IEN[e][j]
+#
+#    Kzz[ii,jj] += element2D.kxx[i][j]
+#    Kzr[ii,jj] += element2D.kxy[i][j]
+#    Krz[ii,jj] += element2D.kyx[i][j]
+#    Krr[ii,jj] += element2D.kyy[i][j]
+#    K[ii,jj] += element2D.kxx[i][j] + element2D.kyy[i][j]
+#  
+#    M[ii,jj] += element2D.mass[i][j]
+#    Mr[ii,jj] += element2D.mr[i][j]
+#    M1r[ii,jj] += element2D.m1r[i][j]
+#    MLump[ii,ii] += element2D.mass[i][j]
+#
+#    Gz[ii,jj] += element2D.gx[i][j]
+#    Gr[ii,jj] += element2D.gy[i][j]
+#    Gz1r[ii,jj] += element2D.gx1r[i][j]
+#    Gr1r[ii,jj] += element2D.gy1r[i][j]
 
 
+ elif _polynomial_option == 3:
+  polynomial_order = 'Quad Element'
+  
+  for e in tqdm(range(0, _nelem)):
+   element2D.quadratic(e)
+
+   v1 = _IEN[e][0]
+   v2 = _IEN[e][1]
+   v3 = _IEN[e][2]
+   v4 = _IEN[e][3]
+   v5 = _IEN[e][4]
+   v6 = _IEN[e][5]
+
+   r_ele = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
+  
+   for i in range(0,_GL): 
+    ii = _IEN[e][i]
+  
+    for j in range(0,_GL):
+     jj = _IEN[e][j]
+
+     Kzz[ii,jj] += element2D.kxx[i][j]
+     Kzr[ii,jj] += element2D.kxy[i][j]
+     Krz[ii,jj] += element2D.kyx[i][j]
+     Krr[ii,jj] += element2D.kyy[i][j]
+     K[ii,jj] += element2D.kxx[i][j] + element2D.kyy[i][j]
+   
+     M[ii,jj] += element2D.mass[i][j]
+     Mr[ii,jj] += r_ele*element2D.mass[i][j]
+     M1r[ii,jj] += (1.0/r_ele)*element2D.mass[i][j]
+     MLump[ii,ii] += element2D.mass[i][j]
+
+     Gz[ii,jj] += element2D.gx[i][j]
+     Gr[ii,jj] += element2D.gy[i][j]
+     Gz1r[ii,jj] += (1.0/r_ele)*element2D.gx[i][j]
+     Gr1r[ii,jj] += (1.0/r_ele)*element2D.gy[i][j]
 
  else:
   print ""
