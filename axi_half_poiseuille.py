@@ -35,54 +35,52 @@ print '''
  Gesar Search Group
  State University of the Rio de Janeiro
  ======================================
-''' %sys.argv[0]
+\n''' %sys.argv[0]
 
 
 
 print ' ------'
 print ' INPUT:'
 print ' ------'
+
 print ""
-
-
-# ----------------------------------------------------------------------------
+print ' ----------------------------------------------------------------------------'
 print ' (1) - Linear Element'
 print ' (2) - Mini Element'
 print ' (3) - Quadratic Element'
 print ' (4) - Cubic Element'
-polynomial_option = int(raw_input(" Enter polynomial degree option above: "))
-print ""
-# ----------------------------------------------------------------------------
+polynomial_option = int(raw_input("\n Enter polynomial degree option above: "))
+print' ----------------------------------------------------------------------------\n'
 
 
-# ----------------------------------------------------------------------------
+print ' ----------------------------------------------------------------------------'
 print ' 3 Gauss Points'
 print ' 4 Gauss Points'
 print ' 6 Gauss Points'
 print ' 12 Gauss Points'
-gausspoints = int(raw_input(" Enter Gauss Points Number option above: "))
-print ""
-# ----------------------------------------------------------------------------
+gausspoints = int(raw_input("\n Enter Gauss Points Number option above: "))
+print' ----------------------------------------------------------------------------\n'
 
 
-# ----------------------------------------------------------------------------
+print ' ----------------------------------------------------------------------------'
 print ' (1) - Taylor Galerkin Scheme'
 print ' (2) - Semi Lagrangian Scheme'
-scheme_option = int(raw_input(" Enter simulation scheme option above: "))
-print ""
-print ""
-# ----------------------------------------------------------------------------
+scheme_option = int(raw_input("\n Enter simulation scheme option above: "))
+print' ----------------------------------------------------------------------------\n'
 
 
-# ----------------------------------------------------------------------------
+print ' ----------------------------------------------------------------------------'
 nt = int(raw_input(" Enter number of time interations (nt): "))
+print' ----------------------------------------------------------------------------\n'
+
+
+print ' ----------------------------------------------------------------------------'
 directory_save = raw_input(" Enter folder name to save simulations: ")
-print ""
-# ----------------------------------------------------------------------------
+print' ----------------------------------------------------------------------------\n'
 
 
 
-print ' ------------'
+print '\n ------------'
 print ' IMPORT MESH:'
 print ' ------------'
 
@@ -90,7 +88,10 @@ start_time = time()
 
 # Linear Element
 if polynomial_option == 1:
- mesh_name = 'malha_axi.msh'
+ #mesh_name = 'malha_half_poiseuille.msh'
+ #mesh_name = 'malha_half_poiseuille3.msh'
+ #mesh_name = 'malha_axi.msh'
+ mesh_name = 'malha_axi20.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -166,8 +167,7 @@ Sc = 1.0
 
 end_time = time()
 import_mesh_time = end_time - start_time
-print ' time duration: %.1f seconds' %import_mesh_time
-print ""
+print ' time duration: %.1f seconds \n' %import_mesh_time
 
 
 
@@ -182,8 +182,7 @@ Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order =
 
 end_time = time()
 assembly_time = end_time - start_time
-print ' time duration: %.1f seconds' %assembly_time
-print ""
+print ' time duration: %.1f seconds \n' %assembly_time
 
 
 
@@ -299,8 +298,7 @@ psi = psi[0].reshape((len(psi[0]),1))
 
 end_time = time()
 bc_apply_time = end_time - start_time
-print ' time duration: %.1f seconds' %bc_apply_time
-print ""
+print ' time duration: %.1f seconds \n' %bc_apply_time
 
 
 
@@ -322,16 +320,11 @@ print ' Schmidt number: %s' %Sc
 print ""
 
 
-
-
-
-
 print ' ----------------------------'
 print ' SOLVE THE LINEARS EQUATIONS:'
-print ' ----------------------------'
-print ""
-print ' Saving simulation in %s' %directory_save
-print ""
+print ' ---------------------------- \n'
+
+print ' Saving simulation in %s \n' %directory_save
 
 
 
@@ -490,16 +483,13 @@ for t in tqdm(range(0, nt)):
  rvelocity_RHS = rvelocity_RHS + condition_rvelocity.bc_dirichlet
  vr = scipy.sparse.linalg.cg(condition_rvelocity.LHS,rvelocity_RHS,vr, maxiter=1.0e+05, tol=1.0e-05)
  vr = vr[0].reshape((len(vr[0]),1))
+ vr = vr*0.0 #vr zero result forced
  #----------------------------------------------------------------------------------
 
 
 end_time = time()
 solution_time = end_time - start_time
-print ' time duration: %.1f seconds' %solution_time
-print ""
-
-
-
+print ' time duration: %.1f seconds \n' %solution_time
 
 
 print ' ----------------'
@@ -511,6 +501,7 @@ print ""
 
 # -------------------------------- Export Relatory ---------------------------------------
 relatory.export(save.path, directory_save, sys.argv[0], benchmark_problem, scheme_name, mesh_name, equation_number, npoints, nelem, length_min, dt, nt, Re, Sc, import_mesh_time, assembly_time, bc_apply_time, solution_time, polynomial_order, gausspoints)
+# ----------------------------------------------------------------------------------------
 
 
 

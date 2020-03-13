@@ -230,8 +230,15 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    v2 = _IEN[e][1]
    v3 = _IEN[e][2]
 
+
+   #radius = [_r[v1],_r[v2],_r[v3]]
+   #if 0.0 in radius:
+   # r_ele = max(radius)
+   # 
+   #else:
    r_ele = (_r[v1] + _r[v2] + _r[v3])/3.0
-  
+
+
    for i in range(0,_GL): 
     ii = _IEN[e][i]
   
