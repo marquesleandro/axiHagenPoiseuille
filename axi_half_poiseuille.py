@@ -281,9 +281,6 @@ psi = np.copy(condition_streamfunction.bc_1)
 w = np.zeros([npoints,1], dtype = float)
 
 
-# -------------------------- Import VTK File ------------------------------------
-npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHalfPoiseuille/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
-
 
 #---------- Step 1 - Compute the vorticity and stream field --------------------
 # -----Vorticity initial-----
@@ -301,6 +298,16 @@ streamfunction_RHS = streamfunction_RHS + condition_streamfunction.bc_dirichlet
 psi = scipy.sparse.linalg.cg(condition_streamfunction.LHS,streamfunction_RHS,psi, maxiter=1.0e+05, tol=1.0e-05)
 psi = psi[0].reshape((len(psi[0]),1))
 #----------------------------------------------------------------------------------
+
+
+
+
+# -------------------------- Import VTK File ------------------------------------
+npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
+#----------------------------------------------------------------------------------
+
+
+
 
 end_time = time()
 bc_apply_time = end_time - start_time
