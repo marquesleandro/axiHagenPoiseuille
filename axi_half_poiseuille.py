@@ -20,6 +20,7 @@ import search_file
 import import_msh
 import assembly
 import benchmark_problems
+import import_vtk
 import semi_lagrangian
 import export_vtk
 import relatory
@@ -89,9 +90,11 @@ start_time = time()
 # Linear Element
 if polynomial_option == 1:
  #mesh_name = 'malha_half_poiseuille.msh'
- #mesh_name = 'malha_half_poiseuille3.msh'
+ #mesh_name = 'malha_half_poiseuille20.msh'
+ mesh_name = 'malha_half_poiseuille_refined.msh'
  #mesh_name = 'malha_axi.msh'
- mesh_name = 'malha_axi20.msh'
+ #mesh_name = 'malha_axi_v2.msh'
+ #mesh_name = 'malha_axi20.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -278,6 +281,9 @@ psi = np.copy(condition_streamfunction.bc_1)
 w = np.zeros([npoints,1], dtype = float)
 
 
+# -------------------------- Import VTK File ------------------------------------
+npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHalfPoiseuille/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
+
 
 #---------- Step 1 - Compute the vorticity and stream field --------------------
 # -----Vorticity initial-----
@@ -360,15 +366,16 @@ for t in tqdm(range(0, nt)):
  vorticity_LHS = sps.lil_matrix.copy(M)
  vorticity_bc_1 = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,vorticity_bc_1, maxiter=1.0e+05, tol=1.0e-05)
  vorticity_bc_1 = vorticity_bc_1[0].reshape((len(vorticity_bc_1[0]),1))
+
  #vorticity_ibc = list(vorticity_ibc)
  #for i in range(0,len(dirichlet_pts[2])):
  # line = dirichlet_pts[2][i][0] - 1
  # v1 = dirichlet_pts[2][i][1] - 1
  # v2 = dirichlet_pts[2][i][2] - 1
- #
+ # 
  # if line == 7:
  #  vorticity_bc_1[v1] = 0.0
- #  vorticity_bc_1[v1] = 0.0
+ #  vorticity_bc_1[v2] = 0.0
  #  vorticity_ibc.append(v1)
  #  vorticity_ibc.append(v2)
  #

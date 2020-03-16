@@ -10,8 +10,9 @@
 
 # Converting .msh in a python list
 
+import numpy as np
 
-def vtkfile(_file,_npoints): 
+def vtkfile_linear(_file): 
 
  vtklist = [] 
  with open(_file) as vtkfile:
@@ -19,46 +20,52 @@ def vtkfile(_file,_npoints):
     row = line.split()
     vtklist.append(row[:])
 
- if vtklist.find("scalar1"):
-  print vtklist.index("scalar1")
-  print "yes"
- 
- '''
- for i in range(0,_npoints):
-  if vtklist[i][0] == "POINTS":
-   line_points = i + 1
+ for i in range(0,len(vtklist)):
+  for j in range(0,len(vtklist[i])):
+   if vtklist[i][j] == "POINTS":
+    npoints = int(vtklist[i][j+1])
 
-  elif vtklist[i][0] == "VECTORS":
-   line_vector = i + 1
+    x = np.zeros([npoints,1], dtype = float)
+    y = np.zeros([npoints,1], dtype = float)
+    for k in range(0,npoints):
+     x[k] = float(vtklist[i+k+1][0])
+     y[k] = float(vtklist[i+k+1][1])
+    continue  
 
-  elif vtklist[i][1] == "scalar1":
-   line_scalar1 = i + 1
+   if vtklist[i][j] == "CELLS":
+    nelem = int(vtklist[i][j+1])
 
-  elif vtklist[i][1] == "scalar2":
-   line_scalar2 = i + 1
+    IEN = np.zeros([nelem,3], dtype = int)
+    for e in range(0,nelem):
+     IEN[e][0] = int(vtklist[i+e+1][1])
+     IEN[e][1] = int(vtklist[i+e+1][2])
+     IEN[e][2] = int(vtklist[i+e+1][3])
+    continue 
 
-  elif vtklist[i][1] == "scalar3":
-   line_scalar3 = i + 1
+   if vtklist[i][j] == "VECTORS":
+    vx = np.zeros([npoints,1], dtype = float)
+    vy = np.zeros([npoints,1], dtype = float)
+    for k in range(0,npoints):
+     vx[k] = float(vtklist[i+k+1][0])
+     vy[k] = float(vtklist[i+k+1][1])
+    continue  
 
+   if vtklist[i][j] == "scalar1":
+    scalar1 = np.zeros([npoints,1], dtype = float)
+    for k in range(0,npoints):
+     scalar1[k] = float(vtklist[i+k+2][0])
+    continue  
 
- x = np.zeros([_npoints,1], dtype = float)
- y = np.zeros([_npoints,1], dtype = float)
- vx = np.zeros([_npoints,1], dtype = float)
- vy = np.zeros([_npoints,1], dtype = float)
- scalar1 = np.zeros([_npoints,1], dtype = float)
- scalar2 = np.zeros([_npoints,1], dtype = float)
- scalar3 = np.zeros([_npoints,1], dtype = float)
- for i in range(0,len(_npoints)):
-  x[i] = vtk[line_points + i][0]
-  y[i] = vtk[line_points + i][1]
+   if vtklist[i][j] == "scalar2":
+    scalar2 = np.zeros([npoints,1], dtype = float)
+    for k in range(0,npoints):
+     scalar2[k] = float(vtklist[i+k+2][0])
+    continue  
 
-  
-  vx[i] = vtk[line_vector + i][0]
-  vy[i] = vtk[line_vector + i][1]
+   if vtklist[i][j] == "scalar3":
+    scalar3 = np.zeros([npoints,1], dtype = float)
+    for k in range(0,npoints):
+     scalar3[k] = float(vtklist[i+k+2][0])
+    continue  
 
-  scalar1[i] = vtk[line_scalar1 + i][0]
-  scalar2[i] = vtk[line_scalar2 + i][0]
-  scalar3[i] = vtk[line_scalar3 + i][0]
-
- return x, y, vx, vy, scalar1, scalar2, scalar3
- '''
+ return npoints, nelem, IEN, x, y, vx, vy, scalar1, scalar2, scalar3
