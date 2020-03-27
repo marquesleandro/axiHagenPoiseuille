@@ -89,9 +89,9 @@ start_time = time()
 
 # Linear Element
 if polynomial_option == 1:
- #mesh_name = 'malha_half_poiseuille.msh'
+ mesh_name = 'malha_half_poiseuille.msh'
  #mesh_name = 'malha_half_poiseuille20.msh'
- mesh_name = 'malha_half_poiseuille_refined.msh'
+ #mesh_name = 'malha_half_poiseuille_refined.msh'
  #mesh_name = 'malha_axi.msh'
  #mesh_name = 'malha_axi_v2.msh'
  #mesh_name = 'malha_axi20.msh'
@@ -180,7 +180,7 @@ print ' ---------'
 
 start_time = time()
 
-Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
+Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, M1r2, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
 
 
 end_time = time()
@@ -303,7 +303,7 @@ psi = psi[0].reshape((len(psi[0]),1))
 
 
 # -------------------------- Import VTK File ------------------------------------
-npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
+#npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
 #----------------------------------------------------------------------------------
 
 
@@ -431,7 +431,7 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Linear'
    w_d = semi_lagrangian.Linear2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
    A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w))
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
@@ -459,7 +459,7 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Quad'
    w_d = semi_lagrangian.Quad2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
    A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w))
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
