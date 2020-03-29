@@ -1096,7 +1096,7 @@ class Convection1D:
 
 
 
-class axiHalf_Poiseuille:
+class axiHagen_Poiseuille:
 
  # ------------------------------------------------------------------------------------------------------
  # Use:
@@ -1126,7 +1126,7 @@ class axiHalf_Poiseuille:
   _self.z = _z
   _self.r = _r
   _self.bc = np.zeros([_self.nphysical,1], dtype = float) 
-  _self.benchmark_problem = 'Axi Half Poiseuille'
+  _self.benchmark_problem = 'Axi Hagen Poiseuille'
 
   # Velocity vx condition
   _self.bc[0][0] = 0.0
@@ -1283,7 +1283,7 @@ class axiQuadHalf_Poiseuille:
   _self.z = _z
   _self.r = _r
   _self.bc = np.zeros([_self.nphysical,1], dtype = float) 
-  _self.benchmark_problem = 'Axi Quad Half Poiseuille'
+  _self.benchmark_problem = 'Axi Quad Hagen Poiseuille'
 
   # Velocity vx condition
   _self.bc[0][0] = 0.0
