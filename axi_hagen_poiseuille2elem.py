@@ -387,13 +387,6 @@ for t in tqdm(range(0, nt)):
 
 
  # ------------------------ Export VTK File ---------------------------------------
- print ' ----------------'
- print ' EXPORT VTK FILE:'
- print ' ----------------'
-
-
- start_time = time()
-
  # Linear and Mini Elements
  if polynomial_option == 1 or polynomial_option == 2:   
   save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
@@ -405,12 +398,6 @@ for t in tqdm(range(0, nt)):
   save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
   save.create_dir(directory_save)
   save.saveVTK(directory_save + str(t))
-
-
- end_time = time()
- export_time_solver = end_time - start_time
- print ' time duration: %.1f seconds' %export_time_solver
- print ""
  # ---------------------------------------------------------------------------------
 
 

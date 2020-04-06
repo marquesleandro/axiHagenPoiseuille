@@ -29,12 +29,13 @@ Physical Line("neumann1 outflow") = {4};
 Physical Line("dirichlet1 inflow") = {6};
 Physical Line("neumann1 symmetric") = {5};
 Physical Line("dirichlet2 noslip top") = {1,2,3};
-Physical Line("dirichlet2 outflow") = {4};
-Physical Line("dirichlet2 inflow") = {6};
+Physical Line("neumann2 outflow") = {4};
+Physical Line("neumann2 inflow") = {6};
 Physical Line("dirichlet2 symmetric") = {5};
 Physical Line("dirichlet3 symmetric") = {5};
 Physical Line("neumann3 outflow") = {4};
-Physical Line("dirichlet3 inflow") = {6};
+Physical Line("neumann3 inflow") = {6};
 Physical Line("dirichlet3 top") = {1,2,3};
+Physical Line("dirichlet4 vorticity") = {1,2,3,4,5,6};
 
 Physical Surface(11) = {11};

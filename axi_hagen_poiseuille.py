@@ -89,12 +89,9 @@ start_time = time()
 
 # Linear Element
 if polynomial_option == 1:
- mesh_name = 'malha_half_poiseuille.msh'
- #mesh_name = 'malha_half_poiseuille20.msh'
- #mesh_name = 'malha_half_poiseuille_refined.msh'
- #mesh_name = 'malha_axi.msh'
- #mesh_name = 'malha_axi_v2.msh'
- #mesh_name = 'malha_axi20.msh'
+ #mesh_name = 'malha_hagen_poiseuille.msh'
+ #mesh_name = 'malha_half_poiseuille.msh'
+ mesh_name = 'malha_half_poiseuille20.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -220,6 +217,11 @@ if polynomial_option == 1:
  streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
+
+ # Applying vorticity condition
+ #condition_vorticity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
+ #condition_vorticity.vorticity_condition(dirichlet_pts[4])
+ #vorticity_ibc = condition_vorticity.ibc
  # ---------------------------------------------------------------------------------
 
 # Mini Element
@@ -353,13 +355,6 @@ end_type = 0
 for t in tqdm(range(0, nt)):
 
  # ------------------------ Export VTK File ---------------------------------------
- print ' ----------------'
- print ' EXPORT VTK FILE:'
- print ' ----------------'
-
-
- start_time = time()
-
  # Linear and Mini Elements
  if polynomial_option == 1 or polynomial_option == 2:   
   save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
@@ -371,11 +366,6 @@ for t in tqdm(range(0, nt)):
   save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
   save.create_dir(directory_save)
   save.saveVTK(directory_save + str(t))
-
- end_time = time()
- export_time_solver = end_time - start_time
- print ' time duration: %.1f seconds' %export_time_solver
- print ""
  # ---------------------------------------------------------------------------------
 
 
@@ -429,8 +419,8 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Linear'
    w_d = semi_lagrangian.Linear2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
    A = np.copy(M)/dt
-   #vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
+   #vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
@@ -498,13 +488,13 @@ for t in tqdm(range(0, nt)):
  rvelocity_RHS = rvelocity_RHS + condition_rvelocity.bc_dirichlet
  vr = scipy.sparse.linalg.cg(condition_rvelocity.LHS,rvelocity_RHS,vr, maxiter=1.0e+05, tol=1.0e-05)
  vr = vr[0].reshape((len(vr[0]),1))
- vr = vr*0.0 #vr zero result forced
+ vr = vr*0.0 #null vr forced
  #----------------------------------------------------------------------------------
 
  # ------------------------ CHECK STEADY STATE ----------------------------------
  vz_dif = np.sqrt((vz-vz_old)**2)
  vr_dif = np.sqrt((vr-vr_old)**2)
- if np.all(vz_dif < 5e-50) and np.all(vr_dif < 5e-50):
+ if np.all(vz_dif < 1e-10) and np.all(vr_dif < 1e-10):
   end_type = 1
   break
  # ---------------------------------------------------------------------------------
@@ -526,6 +516,11 @@ print ' ----------------'
 print ' SAVING RELATORY:'
 print ' ----------------'
 print ""
+
+if end_type == 0:
+ print ' END SIMULATION. NOT STEADY STATE'
+ print ' Relatory saved in %s' %directory_save
+ print ""
 
 elif end_type == 1:
  print ' END SIMULATION. STEADY STATE'

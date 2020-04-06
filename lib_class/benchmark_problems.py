@@ -1224,6 +1224,9 @@ class axiHagen_Poiseuille:
    elif line == 11:
     _self.bc_1[v1] = 1.0/2.0
     _self.bc_1[v2] = 1.0/2.0
+    #_self.bc_1[v1] = (_self.r[v1]**2)/2.0
+    #_self.bc_1[v2] = (_self.r[v2]**2)/2.0
+
 
     _self.ibc.append(v1)
     _self.ibc.append(v2)
@@ -1251,6 +1254,23 @@ class axiHagen_Poiseuille:
    _self.bc_dirichlet[mm] = _self.bc_1[mm]
    _self.bc_2[mm] = 0.0
  
+
+ def vorticity_condition(_self, _dirichlet_pts):
+  _self.ibc = [] 
+  _self.dirichlet_pts = _dirichlet_pts
+ 
+
+  for i in range(0, len(_self.dirichlet_pts)):
+   line = _self.dirichlet_pts[i][0] - 1
+   v1 = _self.dirichlet_pts[i][1] - 1
+   v2 = _self.dirichlet_pts[i][2] - 1
+
+   _self.ibc.append(v1)
+   _self.ibc.append(v2)
+   
+  _self.ibc = np.unique(_self.ibc)
+
+
  
 
 class axiQuadHalf_Poiseuille:
