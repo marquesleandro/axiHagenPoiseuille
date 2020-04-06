@@ -441,6 +441,8 @@ class Mini2D:
   _self.dirichlet_pts = {}
   _self.neighbors_nodes = {}
   _self.neighbors_elements = {}
+  _self.neighbors_nodes_linear = {}
+  _self.neighbors_elements_linear = {}
   _self.far_neighbors_nodes = {}
   _self.far_neighbors_elements = {}
 
@@ -503,8 +505,8 @@ class Mini2D:
 
 
   _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
-  _self.NP = _self.npoints
-  _self.npoints = _self.NP + _self.nelem
+  _self.npoints_linear = _self.npoints
+  _self.npoints = _self.npoints_linear + _self.nelem
 
 
   for i in range(0, _self.npoints):
@@ -513,6 +515,10 @@ class Mini2D:
    _self.far_neighbors_nodes[i] = []
    _self.far_neighbors_elements[i] = []
 
+  for i in range(0, _self.npoints_linear):
+   _self.neighbors_nodes_linear[i] = []
+   _self.neighbors_elements_linear[i] = []
+ 
 
   _self.ii = ii
   _self.jj = jj
@@ -521,30 +527,42 @@ class Mini2D:
  def coord(_self):
   _self.x = np.zeros([_self.npoints,1], dtype = float)
   _self.y = np.zeros([_self.npoints,1], dtype = float)
+  _self.x_linear = np.zeros([_self.npoints_linear,1], dtype = float)
+  _self.y_linear = np.zeros([_self.npoints_linear,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.NP):  
+  for i in range(0, _self.npoints_linear):  
    _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
    _self.y[i] = _self.gmsh[_self.nphysical + 8 + i][2]
+   _self.x_linear[i] = _self.gmsh[_self.nphysical + 8 + i][1]
+   _self.y_linear[i] = _self.gmsh[_self.nphysical + 8 + i][2]
    _self.npts.append(i)
 
 
  def ien(_self):
   _self.IEN = np.zeros([_self.nelem,4], dtype = int)
+  _self.IEN_linear = np.zeros([_self.nelem,3], dtype = int)
   _self.GL = len(_self.IEN[0,:])
+  _self.GL_linear = len(_self.IEN_linear[0,:])
   length = []
+  _self.nodes_linear = []
 
   for e in range(0, _self.nelem):
    v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
    v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
    v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
-   v4 = _self.NP + e
+   v4 = _self.npoints_linear + e
   
    _self.IEN[e] = [v1,v2,v3,v4]
+   _self.IEN_linear[e] = [v1,v2,v3]
 
    _self.x[v4] = (_self.x[v1] + _self.x[v2] + _self.x[v3])/3.0
    _self.y[v4] = (_self.y[v1] + _self.y[v2] + _self.y[v3])/3.0
    _self.npts.append(v4)
+
+   _self.nodes_linear.append(v1)  
+   _self.nodes_linear.append(v2)  
+   _self.nodes_linear.append(v3)  
 
    _self.neighbors_nodes[v1].extend(_self.IEN[e])  
    _self.neighbors_nodes[v2].extend(_self.IEN[e])  
@@ -560,6 +578,18 @@ class Mini2D:
    _self.neighbors_elements[v2].append(e)  
    _self.neighbors_elements[v3].append(e)  
    _self.neighbors_elements[v4].append(e)  
+
+   _self.neighbors_nodes_linear[v1].extend(_self.IEN_linear[e])  
+   _self.neighbors_nodes_linear[v2].extend(_self.IEN_linear[e])  
+   _self.neighbors_nodes_linear[v3].extend(_self.IEN_linear[e])  
+   
+   _self.neighbors_nodes_linear[v1] = list(set(_self.neighbors_nodes_linear[v1]))
+   _self.neighbors_nodes_linear[v2] = list(set(_self.neighbors_nodes_linear[v2]))
+   _self.neighbors_nodes_linear[v3] = list(set(_self.neighbors_nodes_linear[v3]))
+   
+   _self.neighbors_elements_linear[v1].append(e)  
+   _self.neighbors_elements_linear[v2].append(e)  
+   _self.neighbors_elements_linear[v3].append(e)  
 
    x_a = _self.x[v1] - _self.x[v2]
    x_b = _self.x[v2] - _self.x[v3]
@@ -578,6 +608,7 @@ class Mini2D:
    length.append(length3)
    
   _self.length_min = min(length)
+  _self.nodes_linear = list(set(_self.nodes_linear))  
 
   for i in range(0, _self.npoints):
    for j in _self.neighbors_nodes[i]:
