@@ -230,7 +230,7 @@ if polynomial_option == 1:
  condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + 2.0*sps.lil_matrix.copy(Gr1r)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
  # ---------------------------------------------------------------------------------
@@ -256,7 +256,7 @@ elif polynomial_option == 2:
  condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + 2.0*sps.lil_matrix.copy(Gr1r)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
  # ---------------------------------------------------------------------------------
@@ -282,7 +282,7 @@ elif polynomial_option == 3:
  condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + 2.0*sps.lil_matrix.copy(Gr1r)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
  # ---------------------------------------------------------------------------------
@@ -433,7 +433,7 @@ for t in tqdm(range(0, nt)):
  vorticity_bc_dirichlet = np.zeros([npoints_linear,1], dtype = float)
  vorticity_bc_neumann = np.zeros([npoints_linear,1], dtype = float)
  vorticity_bc_2 = np.ones([npoints_linear,1], dtype = float)
- vorticity_LHS = ((np.copy(M_linear)/dt) + (1.0/Re)*np.copy(Kzz_linear) + (1.0/Re)*np.copy(Krr_linear) - (1.0/Re)*np.copy(Gr1r_linear) + (1.0/Re)*sps.lil_matrix.dot(M1r2_linear,w_linear))
+ vorticity_LHS = ((np.copy(M_linear)/dt) + (1.0/Re)*np.copy(Kzz_linear) + (1.0/Re)*np.copy(Krr_linear) - (1.0/Re)*np.copy(Gr1r_linear))
  for mm in vorticity_ibc:
   for nn in neighbors_nodes_linear[mm]:
    vorticity_bc_dirichlet[nn] -= float(vorticity_LHS[nn,mm]*vorticity_bc_1[mm])
@@ -474,7 +474,7 @@ for t in tqdm(range(0, nt)):
    w_d = semi_lagrangian.Linear2D(npoints_linear, neighbors_elements_linear, IEN_linear, z_linear, r_linear, vz_linear, vr_linear, dt, w_linear)
    print "6"
    A = np.copy(M_linear)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) 
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) - (1.0/Re)*sps.lil_matrix.dot(M1r2_linear,w_linear) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
@@ -489,7 +489,7 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Mini'
    w_d = semi_lagrangian.Mini2D(npoints_linear, neighbors_elements_linear, IEN_linear, z_linear, r_linear, vz_linear, vr_linear, dt, w_linear)
    A = np.copy(M_linear)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) 
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) - (1.0/Re)*sps.lil_matrix.dot(M1r2_linear,w_linear) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
@@ -503,7 +503,7 @@ for t in tqdm(range(0, nt)):
    scheme_name = 'Semi Lagrangian Quad'
    w_d = semi_lagrangian.Quad2D(npoints_linear, neighbors_elements_linear, IEN_linear, z_linear, r_linear, vz_linear, vr_linear, dt, w_linear)
    A = np.copy(M_linear)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) 
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr_linear,sps.lil_matrix.dot(M1r_linear,w_linear)) - (1.0/Re)*sps.lil_matrix.dot(M1r2_linear,w_linear) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)

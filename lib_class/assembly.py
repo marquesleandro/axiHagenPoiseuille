@@ -313,7 +313,8 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    v5 = _IEN[e][4]
    v6 = _IEN[e][5]
 
-   r_ele = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
+   #r_ele = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
+   r_ele = (_r[v1] + _r[v2] + _r[v3])/3.0
   
    for i in range(0,_GL): 
     ii = _IEN[e][i]
