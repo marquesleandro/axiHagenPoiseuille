@@ -90,8 +90,8 @@ start_time = time()
 # Linear Element
 if polynomial_option == 1:
  #mesh_name = 'malha_hagen_poiseuille.msh'
- #mesh_name = 'malha_half_poiseuille.msh'
- mesh_name = 'malha_half_poiseuille20.msh'
+ mesh_name = 'malha_half_poiseuille.msh'
+ #mesh_name = 'malha_half_poiseuille20.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -194,9 +194,11 @@ print ' --------------------------------'
 start_time = time()
 
 
+# ------------------------ Boundaries Conditions ----------------------------------
+
 # Linear Element
 if polynomial_option == 1:
- # ------------------------ Boundaries Conditions ----------------------------------
+
  # Applying vz condition
  zvelocity_LHS0 = sps.lil_matrix.copy(M)
  condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
@@ -222,11 +224,11 @@ if polynomial_option == 1:
  #condition_vorticity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  #condition_vorticity.vorticity_condition(dirichlet_pts[4])
  #vorticity_ibc = condition_vorticity.ibc
- # ---------------------------------------------------------------------------------
+
+
 
 # Mini Element
 elif polynomial_option == 2:
- # ------------------------ Boundaries Conditions ----------------------------------
  # Applying vz condition
  zvelocity_LHS0 = sps.lil_matrix.copy(M)
  condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
@@ -247,12 +249,12 @@ elif polynomial_option == 2:
  streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
- # ---------------------------------------------------------------------------------
+
 
 
 # Quad Element
 elif polynomial_option == 3:
- # ------------------------ Boundaries Conditions ----------------------------------
+
  # Applying vz condition
  zvelocity_LHS0 = sps.lil_matrix.copy(M)
  condition_zvelocity = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
@@ -273,7 +275,8 @@ elif polynomial_option == 3:
  streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
  condition_streamfunction = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
- # ---------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
+
 
 
 # -------------------------- Initial condition ------------------------------------
@@ -281,6 +284,8 @@ vz = np.copy(condition_zvelocity.bc_1)
 vr = np.copy(condition_rvelocity.bc_1)
 psi = np.copy(condition_streamfunction.bc_1)
 w = np.zeros([npoints,1], dtype = float)
+# ---------------------------------------------------------------------------------
+
 
 
 
@@ -293,7 +298,6 @@ w = w[0].reshape((len(w[0]),1))
 
 
 # -----Streamline initial-----
-# psi condition
 streamfunction_RHS = sps.lil_matrix.dot(Mr,w)
 streamfunction_RHS = np.multiply(streamfunction_RHS,condition_streamfunction.bc_2)
 streamfunction_RHS = streamfunction_RHS + condition_streamfunction.bc_dirichlet
@@ -305,7 +309,7 @@ psi = psi[0].reshape((len(psi[0]),1))
 
 
 # -------------------------- Import VTK File ------------------------------------
-#npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/results/psi_boundary_inflow_refinedmesh/psi_boundary_inflow_refinedmesh599.vtk")
+#npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHagenPoiseuille/results/linear8/linear8290.vtk")
 #----------------------------------------------------------------------------------
 
 
@@ -354,6 +358,7 @@ vr_old = np.zeros([npoints,1], dtype = float)
 end_type = 0
 for t in tqdm(range(0, nt)):
 
+
  # ------------------------ Export VTK File ---------------------------------------
  # Linear and Mini Elements
  if polynomial_option == 1 or polynomial_option == 2:   
@@ -370,6 +375,7 @@ for t in tqdm(range(0, nt)):
 
 
 
+
  #---------- Step 2 - Compute the boundary conditions for vorticity --------------
  vorticity_RHS = sps.lil_matrix.dot(Gz,vr) - sps.lil_matrix.dot(Gr,vz)
  vorticity_LHS = sps.lil_matrix.copy(M)
@@ -380,8 +386,8 @@ for t in tqdm(range(0, nt)):
  vorticity_bc_dirichlet = np.zeros([npoints,1], dtype = float)
  vorticity_bc_neumann = np.zeros([npoints,1], dtype = float)
  vorticity_bc_2 = np.ones([npoints,1], dtype = float)
- #vorticity_LHS = ((np.copy(M)/dt) + (1.0/Re)*np.copy(Kzz) + (1.0/Re)*np.copy(Krr) - (1.0/Re)*np.copy(Gr1r))
- vorticity_LHS = ((np.copy(M)/dt) + (1.0/Re)*np.copy(Kzz) + (1.0/Re)*np.copy(Krr) - (1.0/Re)*np.copy(Gr1r) + (1.0/Re)*np.copy(M1r2))
+
+ vorticity_LHS = ((np.copy(M)/dt) + (1.0/Re)*np.copy(Kzz) + (1.0/Re)*np.copy(Krr) - (1.0/Re)*np.copy(Gr1r) + (1.0/Re)*np.copy(M1r2)) 
  for mm in vorticity_ibc:
   for nn in neighbors_nodes[mm]:
    vorticity_bc_dirichlet[nn] -= float(vorticity_LHS[nn,mm]*vorticity_bc_1[mm])
@@ -417,24 +423,10 @@ for t in tqdm(range(0, nt)):
   # Linear Element   
   if polynomial_option == 1:
    scheme_name = 'Semi Lagrangian Linear'
+
    w_d = semi_lagrangian.Linear2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
+
    A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
-   #vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
-
-   vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
-   vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
-   vorticity_RHS = vorticity_RHS + vorticity_bc_dirichlet
-
-   w = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,w, maxiter=1.0e+05, tol=1.0e-05)
-   w = w[0].reshape((len(w[0]),1))
-
-  # Mini Element   
-  elif polynomial_option == 2:
-   scheme_name = 'Semi Lagrangian Mini'
-   w_d = semi_lagrangian.Mini2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
-   A = np.copy(M)/dt
-   #vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
    vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
@@ -444,12 +436,33 @@ for t in tqdm(range(0, nt)):
    w = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,w, maxiter=1.0e+05, tol=1.0e-05)
    w = w[0].reshape((len(w[0]),1))
 
+
+
+  # Mini Element   
+  elif polynomial_option == 2:
+   scheme_name = 'Semi Lagrangian Mini'
+
+   w_d = semi_lagrangian.Mini2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
+
+   A = np.copy(M)/dt
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
+
+   vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
+   vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
+   vorticity_RHS = vorticity_RHS + vorticity_bc_dirichlet
+
+   w = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,w, maxiter=1.0e+05, tol=1.0e-05)
+   w = w[0].reshape((len(w[0]),1))
+
+
+
   # Quad Element   
   elif polynomial_option == 3:
    scheme_name = 'Semi Lagrangian Quad'
+
    w_d = semi_lagrangian.Quad2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
+
    A = np.copy(M)/dt
-   #vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) - ((1.0/Re)*sps.lil_matrix.dot(M1r2,w)) 
    vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
@@ -476,6 +489,7 @@ for t in tqdm(range(0, nt)):
 
  #---------- Step 5 - Compute the velocity field -----------------------------------
  # Velocity vz
+ vz_old = np.copy(vz)
  zvelocity_RHS = sps.lil_matrix.dot(Gr1r,psi)
  zvelocity_RHS = np.multiply(zvelocity_RHS,condition_zvelocity.bc_2)
  zvelocity_RHS = zvelocity_RHS + condition_zvelocity.bc_dirichlet
@@ -483,20 +497,23 @@ for t in tqdm(range(0, nt)):
  vz = vz[0].reshape((len(vz[0]),1))
  
  # Velocity vr
+ vr_old = np.copy(vr)
  rvelocity_RHS = -sps.lil_matrix.dot(Gz1r,psi)
  rvelocity_RHS = np.multiply(rvelocity_RHS,condition_rvelocity.bc_2)
  rvelocity_RHS = rvelocity_RHS + condition_rvelocity.bc_dirichlet
  vr = scipy.sparse.linalg.cg(condition_rvelocity.LHS,rvelocity_RHS,vr, maxiter=1.0e+05, tol=1.0e-05)
  vr = vr[0].reshape((len(vr[0]),1))
- vr = vr*0.0 #null vr forced
  #----------------------------------------------------------------------------------
 
+
+
+
  # ------------------------ CHECK STEADY STATE ----------------------------------
- vz_dif = np.sqrt((vz-vz_old)**2)
- vr_dif = np.sqrt((vr-vr_old)**2)
- if np.all(vz_dif < 1e-10) and np.all(vr_dif < 1e-10):
-  end_type = 1
-  break
+ #vz_dif = np.sqrt((vz-vz_old)**2)
+ #vr_dif = np.sqrt((vr-vr_old)**2)
+ #if np.all(vz_dif < 1e-50) and np.all(vr_dif < 1e-50):
+ # end_type = 1
+ # break
  # ---------------------------------------------------------------------------------
 
  # ------------------------ CHECK CONVERGENCE RESULT ----------------------------------
@@ -505,6 +522,8 @@ for t in tqdm(range(0, nt)):
   break
  # ---------------------------------------------------------------------------------
  
+
+
 
 
 end_time = time()

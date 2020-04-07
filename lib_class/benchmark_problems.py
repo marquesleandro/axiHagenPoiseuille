@@ -1231,12 +1231,12 @@ class axiHagen_Poiseuille:
     _self.ibc.append(v1)
     _self.ibc.append(v2)
 
-   elif line == 10:
-    _self.bc_1[v1] = (_self.r[v1]**2)/2.0
-    _self.bc_1[v2] = (_self.r[v2]**2)/2.0
+   #elif line == 10:
+   # _self.bc_1[v1] = (_self.r[v1]**2)/2.0
+   # _self.bc_1[v2] = (_self.r[v2]**2)/2.0
 
-    _self.ibc.append(v1)
-    _self.ibc.append(v2)
+   # _self.ibc.append(v1)
+   # _self.ibc.append(v2)
 
 
 
