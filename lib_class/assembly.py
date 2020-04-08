@@ -208,6 +208,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
  M1r = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Mr2 = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Gr   = sps.lil_matrix((_npoints,_npoints), dtype = float)
+ Gz   = sps.lil_matrix((_npoints,_npoints), dtype = float)
+ Grr   = sps.lil_matrix((_npoints,_npoints), dtype = float)
+ Gzr   = sps.lil_matrix((_npoints,_npoints), dtype = float)
 
  element2D = gaussian_quadrature.Element2D(_z, _r, _IEN, _GAUSSPOINTS)
  
@@ -238,6 +241,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
+     Gz[ii,jj] += element2D.gx[i][j]
+     Grr[ii,jj] += r_elem*element2D.gy[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
 
 
 
@@ -269,6 +275,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
+     Gz[ii,jj] += element2D.gx[i][j]
+     Grr[ii,jj] += r_elem*element2D.gy[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
 
 
 
@@ -302,6 +311,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
+     Gz[ii,jj] += element2D.gx[i][j]
+     Grr[ii,jj] += r_elem*element2D.gy[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
 
 
 
