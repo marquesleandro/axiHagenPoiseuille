@@ -212,7 +212,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
  Grr   = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Gzr   = sps.lil_matrix((_npoints,_npoints), dtype = float)
 
- element2D = gaussian_quadrature.Element2D(_z, _r, _IEN, _GAUSSPOINTS)
+ element2D = gaussian_quadrature.AxiElement2D(_z, _r, _IEN, _GAUSSPOINTS)
  
  if _polynomial_option == 1:
   polynomial_order = 'Linear Element'
@@ -233,17 +233,17 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
     for j in range(0,_GL):
      jj = _IEN[e][j]
 
-     Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
-     Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
+     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
    
      Mr[ii,jj] += r_elem*element2D.mass[i][j]
      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
-     Gr[ii,jj] += element2D.gy[i][j]
-     Gz[ii,jj] += element2D.gx[i][j]
-     Grr[ii,jj] += r_elem*element2D.gy[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
+     Gr[ii,jj] += element2D.gr[i][j]
+     Gz[ii,jj] += element2D.gz[i][j]
+     Grr[ii,jj] += r_elem*element2D.gr[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
 
 
 
@@ -267,17 +267,17 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
     for j in range(0,_GL):
      jj = _IEN[e][j]
 
-     Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
-     Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
+     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
    
      Mr[ii,jj] += r_elem*element2D.mass[i][j]
      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
-     Gr[ii,jj] += element2D.gy[i][j]
-     Gz[ii,jj] += element2D.gx[i][j]
-     Grr[ii,jj] += r_elem*element2D.gy[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
+     Gr[ii,jj] += element2D.gr[i][j]
+     Gz[ii,jj] += element2D.gz[i][j]
+     Grr[ii,jj] += r_elem*element2D.gr[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
 
 
 
@@ -303,17 +303,17 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
     for j in range(0,_GL):
      jj = _IEN[e][j]
 
-     Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
-     Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
+     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
    
      Mr[ii,jj] += r_elem*element2D.mass[i][j]
      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
-     Gr[ii,jj] += element2D.gy[i][j]
-     Gz[ii,jj] += element2D.gx[i][j]
-     Grr[ii,jj] += r_elem*element2D.gy[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gx[i][j]
+     Gr[ii,jj] += element2D.gr[i][j]
+     Gz[ii,jj] += element2D.gz[i][j]
+     Grr[ii,jj] += r_elem*element2D.gr[i][j]
+     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
 
 
 
@@ -331,13 +331,13 @@ def AxiAssembleMv(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _vr, 
 
  Mv = sps.lil_matrix((_npoints,_npoints), dtype = float)
 
- element2D = gaussian_quadrature.Element2D(_z, _r, _IEN, _GAUSSPOINTS)
+ element2D = gaussian_quadrature.AxiElement2D(_z, _r, _IEN, _GAUSSPOINTS)
  
  if _polynomial_option == 1:
   polynomial_order = 'Linear Element'
   
   for e in tqdm(range(0, _nelem)):
-   element2D.linear(e)
+   element2D.assembleMv_linear(e)
 
    v1 = _IEN[e][0]
    v2 = _IEN[e][1]
@@ -360,7 +360,7 @@ def AxiAssembleMv(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _vr, 
   polynomial_order = 'Mini Element'
   
   for e in tqdm(range(0, _nelem)):
-   element2D.mini(e)
+   element2D.assembleMv_mini(e)
 
    v1 = _IEN[e][0]
    v2 = _IEN[e][1]
@@ -383,7 +383,7 @@ def AxiAssembleMv(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _vr, 
   polynomial_order = 'Quad Element'
   
   for e in tqdm(range(0, _nelem)):
-   element2D.quadratic(e)
+   element2D.assembleMv_quadratic(e)
 
    v1 = _IEN[e][0]
    v2 = _IEN[e][1]
