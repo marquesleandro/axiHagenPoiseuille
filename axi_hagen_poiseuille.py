@@ -162,7 +162,8 @@ nphysical              = msh.nphysical
 
 CFL = 0.5
 #dt = float(CFL*length_min)
-dt = 0.002
+#dt = 0.002
+dt = 0.1
 Re = 100.0
 Sc = 1.0
 
@@ -202,10 +203,13 @@ if polynomial_option == 1:
 
  # Applying vz condition
  zvelocity_LHS0 = sps.lil_matrix.copy(Mr)
+ #condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
+ #condition_zvelocity.neumann_condition(neumann_edges[1])
+ #condition_zvelocity.dirichlet_condition(dirichlet_pts[1])
+ #condition_zvelocity.gaussian_elimination(zvelocity_LHS0,neighbors_nodes)
+
  condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
- condition_zvelocity.neumann_condition(neumann_edges[1])
- condition_zvelocity.dirichlet_condition(dirichlet_pts[1])
- condition_zvelocity.gaussian_elimination(zvelocity_LHS0,neighbors_nodes)
+ condition_zvelocity.zVelocityProfile_condition(dirichlet_pts[1],zvelocity_LHS0,neighbors_nodes)
  vorticity_ibc = condition_zvelocity.ibc
  benchmark_problem = condition_zvelocity.benchmark_problem
 
@@ -217,7 +221,7 @@ if polynomial_option == 1:
  condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + sps.lil_matrix.copy(Gr)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
 
@@ -310,7 +314,7 @@ psi = psi[0].reshape((len(psi[0]),1))
 
 
 # -------------------------- Import VTK File ------------------------------------
-#npoints, nelem, IEN, x, y, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHagenPoiseuille/results/linear8/linear8290.vtk")
+#npoints, nelem, IEN, z, r, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHagenPoiseuille/results/linear8/linear8290.vtk")
 #----------------------------------------------------------------------------------
 
 
@@ -353,11 +357,6 @@ os.chdir(initial_path)
 
 
 
-vorticity_bc_1 = np.zeros([npoints,1], dtype = float) 
-vz_old = np.zeros([npoints,1], dtype = float)
-vr_old = np.zeros([npoints,1], dtype = float)
-end_type = 0
-
 # ------------------------ Export VTK File ---------------------------------------
 # Linear and Mini Elements
 if polynomial_option == 1 or polynomial_option == 2:   
@@ -372,9 +371,41 @@ elif polynomial_option == 3:
  save.saveVTK(directory_save + str(0))
 # ---------------------------------------------------------------------------------
 
+vorticity_bc_1 = np.zeros([npoints,1], dtype = float) 
+vz_old = np.zeros([npoints,1], dtype = float)
+vr_old = np.zeros([npoints,1], dtype = float)
+end_type = 0
 for t in tqdm(range(1, nt)):
- print "\n"
+ print ""
+ print '''
+                COPYRIGHT                    
+  ======================================
+  Simulator: %s
+  created by Leandro Marques at 02/2019
+  e-mail: marquesleandro67@gmail.com
+  Gesar Search Group
+  State University of the Rio de Janeiro
+  ======================================
+ ''' %sys.argv[0]
+
+
+
+ print ' -----------------------------'
+ print ' PARAMETERS OF THE SIMULATION:'
+ print ' -----------------------------'
  
+ print ' Mesh: %s' %mesh_name
+ print ' Number of equation: %s' %equation_number
+ print ' Number of nodes: %s' %npoints
+ print ' Number of elements: %s' %nelem
+ print ' Smallest edge length: %f' %length_min
+ print ' Time step: %s' %dt
+ print ' Number of time iteration: %s' %t
+ print ' Reynolds number: %s' %Re
+ print ' Schmidt number: %s' %Sc
+ print ""
+
+
 
  # ------------------------- ASSEMBLY Mv -------------------------------------------
  print ""
@@ -383,9 +414,20 @@ for t in tqdm(range(1, nt)):
  print ' ------------'
 
  Mv = assembly.AxiAssembleMv(polynomial_option, GL, npoints, nelem, IEN, z, r, vr, gausspoints)
+ print ""
  # ---------------------------------------------------------------------------------
 
 
+
+ # ------------------------ SOLVE LINEAR EQUATIONS ----------------------------------
+ print ' ----------------------------'
+ print ' SOLVE THE LINEARS EQUATIONS:'
+ print ' ----------------------------'
+ print ""
+ print ' Saving simulation in %s' %directory_save
+ print ""
+
+ start_solver_time = time()
 
 
  #---------- Step 2 - Compute the boundary conditions for vorticity --------------
@@ -415,7 +457,7 @@ for t in tqdm(range(1, nt)):
  vorticity_bc_neumann = np.zeros([npoints,1], dtype = float)
  vorticity_bc_2 = np.ones([npoints,1], dtype = float)
 
- vorticity_LHS = (np.copy(Mr)/dt) + (1.0/Re)*np.copy(Krrr) + (1.0/Re)*np.copy(Kzzr) - (1.0/Re)*np.copy(Gr) + (1.0/Re)*np.copy(M1r) - Mv
+ vorticity_LHS = (np.copy(Mr)/dt) + (1.0/Re)*np.copy(Krrr) + (1.0/Re)*np.copy(Kzzr)  + (1.0/Re)*np.copy(M1r) - Mv
  for mm in vorticity_ibc:
   for nn in neighbors_nodes[mm]:
    vorticity_bc_dirichlet[nn] -= float(vorticity_LHS[nn,mm]*vorticity_bc_1[mm])
@@ -533,9 +575,23 @@ for t in tqdm(range(1, nt)):
  vr = vr[0].reshape((len(vr[0]),1))
  #----------------------------------------------------------------------------------
 
+ end_solver_time = time()
+ solver_time = end_solver_time - start_solver_time
+ print ' time duration: %.1f seconds' %solver_time
+ print ""
+ #----------------------------------------------------------------------------------
+ 
 
 
  # ------------------------ Export VTK File ---------------------------------------
+ print ' ----------------'
+ print ' EXPORT VTK FILE:'
+ print ' ----------------'
+
+
+ start_time = time()
+
+
  # Linear and Mini Elements
  if polynomial_option == 1 or polynomial_option == 2:   
   save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
@@ -547,7 +603,14 @@ for t in tqdm(range(1, nt)):
   save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
   save.create_dir(directory_save)
   save.saveVTK(directory_save + str(t))
+
+
+ end_time = time()
+ export_time_solver = end_time - start_time
+ print ' time duration: %.1f seconds' %export_time_solver
+ print ""
  # ---------------------------------------------------------------------------------
+
 
 
 
@@ -565,6 +628,8 @@ for t in tqdm(range(1, nt)):
   break
  # ---------------------------------------------------------------------------------
  
+
+
 
 
 

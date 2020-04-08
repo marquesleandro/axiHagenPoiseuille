@@ -1222,23 +1222,12 @@ class axiHagen_Poiseuille:
     _self.ibc.append(v2)
 
    elif line == 11:
-    #_self.bc_1[v1] = 1.0/2.0
-    #_self.bc_1[v2] = 1.0/2.0
     _self.bc_1[v1] = (_self.r[v1]**2)/2.0
     _self.bc_1[v2] = (_self.r[v2]**2)/2.0
 
 
     _self.ibc.append(v1)
     _self.ibc.append(v2)
-
-   #elif line == 10:
-   # _self.bc_1[v1] = (_self.r[v1]**2)/2.0
-   # _self.bc_1[v2] = (_self.r[v2]**2)/2.0
-
-   # _self.ibc.append(v1)
-   # _self.ibc.append(v2)
-
-
 
   _self.ibc = np.unique(_self.ibc)
 
@@ -1254,6 +1243,57 @@ class axiHagen_Poiseuille:
    _self.bc_dirichlet[mm] = _self.bc_1[mm]
    _self.bc_2[mm] = 0.0
  
+
+
+ def zVelocityProfile_condition(_self, _dirichlet_pts, _LHS0, _neighbors_nodes):
+  _self.bc_dirichlet = np.zeros([_self.npoints,1], dtype = float) 
+  _self.ibc = [] 
+  _self.bc_1 = np.zeros([_self.npoints,1], dtype = float) #For scipy array solve
+  _self.bc_2 = np.ones([_self.npoints,1], dtype = float) 
+  _self.LHS = sps.lil_matrix.copy(_LHS0)
+  _self.dirichlet_pts = _dirichlet_pts
+  _self.neighbors_nodes = _neighbors_nodes
+
+  u_max = 2.0
+  R = 1.0
+  # Dirichlet condition
+  for i in range(0, len(_self.dirichlet_pts)):
+   line = _self.dirichlet_pts[i][0] - 1
+   v1 = _self.dirichlet_pts[i][1] - 1
+   v2 = _self.dirichlet_pts[i][2] - 1
+
+   if line == 0:
+    _self.bc_1[v1] = 0.0
+    _self.bc_1[v2] = 0.0
+ 
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+
+   elif line == 2:
+    _self.bc_1[v1] = (u_max/(R**2))*(R**2 - _self.r[v1]**2)
+    _self.bc_1[v2] = (u_max/(R**2))*(R**2 - _self.r[v2]**2)
+
+
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+
+  _self.ibc = np.unique(_self.ibc)
+
+
+  # Gaussian elimination for vz
+  for mm in _self.ibc:
+   for nn in _self.neighbors_nodes[mm]:
+    _self.bc_dirichlet[nn] -= float(_self.LHS[nn,mm]*_self.bc_1[mm])
+    _self.LHS[nn,mm] = 0.0
+    _self.LHS[mm,nn] = 0.0
+   
+   _self.LHS[mm,mm] = 1.0
+   _self.bc_dirichlet[mm] = _self.bc_1[mm]
+   _self.bc_2[mm] = 0.0
+ 
+
+
+
 
  def vorticity_condition(_self, _dirichlet_pts):
   _self.ibc = [] 
