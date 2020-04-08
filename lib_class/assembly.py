@@ -224,7 +224,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    v2 = _IEN[e][1]
    v3 = _IEN[e][2]
 
-   r_ele = (_r[v1] + _r[v2] + _r[v3])/3.0
+   r_elem = (_r[v1] + _r[v2] + _r[v3])/3.0
 
 
    for i in range(0,_GL): 
@@ -236,9 +236,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
      Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
    
-     Mr[ii,jj] += r_ele*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_ele)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
+     Mr[ii,jj] += r_elem*element2D.mass[i][j]
+     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
      Gz[ii,jj] += element2D.gx[i][j]
@@ -258,7 +258,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    v3 = _IEN[e][2]
    v4 = _IEN[e][3]
 
-   r_ele = (_r[v1] + _r[v2] + _r[v3])/3.0
+   r_elem = (_r[v1] + _r[v2] + _r[v3])/3.0
 
 
    for i in range(0,_GL): 
@@ -270,9 +270,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
      Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
    
-     Mr[ii,jj] += r_ele*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_ele)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
+     Mr[ii,jj] += r_elem*element2D.mass[i][j]
+     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
      Gz[ii,jj] += element2D.gx[i][j]
@@ -295,7 +295,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
    v6 = _IEN[e][5]
 
    #r_ele = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
-   r_ele = (_r[v1] + _r[v2] + _r[v3])/3.0
+   r_elem = (_r[v1] + _r[v2] + _r[v3])/3.0
   
    for i in range(0,_GL): 
     ii = _IEN[e][i]
@@ -306,9 +306,9 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
      Kzzr[ii,jj] += r_elem*element2D.kxx[i][j]
      Krrr[ii,jj] += r_elem*element2D.kyy[i][j]
    
-     Mr[ii,jj] += r_ele*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_ele)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_ele**2)*element2D.mass[i][j]
+     Mr[ii,jj] += r_elem*element2D.mass[i][j]
+     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
 
      Gr[ii,jj] += element2D.gy[i][j]
      Gz[ii,jj] += element2D.gx[i][j]
@@ -324,7 +324,7 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
   sys.exit()
 
 
- return Kzzr, Krrr, Mr, M1r, Mr2, Gr, polynomial_order
+ return Kzzr, Krrr, Mr, M1r, Mr2, Gr, Gz, Grr, Gzr, polynomial_order
 
 
 def AxiAssembleMv(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _vr, _GAUSSPOINTS):

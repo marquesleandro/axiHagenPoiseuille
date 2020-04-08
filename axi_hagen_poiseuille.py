@@ -178,7 +178,7 @@ print ' ---------'
 
 start_time = time()
 
-Kzz, Kzr, Krz, Krr, K, M, Mr, M1r, M1r2, MLump, Gz, Gr, Gz1r, Gr1r, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
+Kzzr, Krrr, Mr, M1r, Mr2, Gr, Gz, Grr, Gzr, polynomial_order = assembly.AxiElement2D(polynomial_option, GL, npoints, nelem, IEN, z, r, gausspoints)
 
 
 end_time = time()
@@ -201,7 +201,7 @@ start_time = time()
 if polynomial_option == 1:
 
  # Applying vz condition
- zvelocity_LHS0 = sps.lil_matrix.copy(M)
+ zvelocity_LHS0 = sps.lil_matrix.copy(Mr)
  condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_zvelocity.neumann_condition(neumann_edges[1])
  condition_zvelocity.dirichlet_condition(dirichlet_pts[1])
@@ -210,14 +210,14 @@ if polynomial_option == 1:
  benchmark_problem = condition_zvelocity.benchmark_problem
 
  # Applying vr condition
- rvelocity_LHS0 = sps.lil_matrix.copy(M)
+ rvelocity_LHS0 = sps.lil_matrix.copy(Mr)
  condition_rvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_rvelocity.neumann_condition(neumann_edges[2])
  condition_rvelocity.dirichlet_condition(dirichlet_pts[2])
  condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + sps.lil_matrix.copy(Gr)
  condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
 
@@ -292,14 +292,14 @@ w = np.zeros([npoints,1], dtype = float)
 
 #---------- Step 1 - Compute the vorticity and stream field --------------------
 # -----Vorticity initial-----
-vorticity_RHS = sps.lil_matrix.dot(Gz,vr) - sps.lil_matrix.dot(Gr,vz)
-vorticity_LHS = sps.lil_matrix.copy(M)
+vorticity_RHS = sps.lil_matrix.dot(Gzr,vr) - sps.lil_matrix.dot(Grr,vz)
+vorticity_LHS = sps.lil_matrix.copy(Mr)
 w = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,w, maxiter=1.0e+05, tol=1.0e-05)
 w = w[0].reshape((len(w[0]),1))
 
 
 # -----Streamline initial-----
-streamfunction_RHS = sps.lil_matrix.dot(Mr,w)
+streamfunction_RHS = sps.lil_matrix.dot(Mr2,w)
 streamfunction_RHS = np.multiply(streamfunction_RHS,condition_streamfunction.bc_2)
 streamfunction_RHS = streamfunction_RHS + condition_streamfunction.bc_dirichlet
 psi = scipy.sparse.linalg.cg(condition_streamfunction.LHS,streamfunction_RHS,psi, maxiter=1.0e+05, tol=1.0e-05)
@@ -357,38 +357,65 @@ vorticity_bc_1 = np.zeros([npoints,1], dtype = float)
 vz_old = np.zeros([npoints,1], dtype = float)
 vr_old = np.zeros([npoints,1], dtype = float)
 end_type = 0
-for t in tqdm(range(0, nt)):
 
+# ------------------------ Export VTK File ---------------------------------------
+# Linear and Mini Elements
+if polynomial_option == 1 or polynomial_option == 2:   
+ save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
+ save.create_dir(directory_save)
+ save.saveVTK(directory_save + str(0))
 
- # ------------------------ Export VTK File ---------------------------------------
- # Linear and Mini Elements
- if polynomial_option == 1 or polynomial_option == 2:   
-  save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
-  save.create_dir(directory_save)
-  save.saveVTK(directory_save + str(t))
+# Quad Element
+elif polynomial_option == 3:   
+ save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
+ save.create_dir(directory_save)
+ save.saveVTK(directory_save + str(0))
+# ---------------------------------------------------------------------------------
 
- # Quad Element
- elif polynomial_option == 3:   
-  save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
-  save.create_dir(directory_save)
-  save.saveVTK(directory_save + str(t))
+for t in tqdm(range(1, nt)):
+ print "\n"
+ 
+
+ # ------------------------- ASSEMBLY Mv -------------------------------------------
+ print ""
+ print ' ------------'
+ print ' ASSEMBLY Mv:'
+ print ' ------------'
+
+ Mv = assembly.AxiAssembleMv(polynomial_option, GL, npoints, nelem, IEN, z, r, vr, gausspoints)
  # ---------------------------------------------------------------------------------
 
 
 
 
  #---------- Step 2 - Compute the boundary conditions for vorticity --------------
- vorticity_RHS = sps.lil_matrix.dot(Gz,vr) - sps.lil_matrix.dot(Gr,vz)
- vorticity_LHS = sps.lil_matrix.copy(M)
+ vorticity_RHS = sps.lil_matrix.dot(Gzr,vr) - sps.lil_matrix.dot(Grr,vz)
+ vorticity_LHS = sps.lil_matrix.copy(Mr)
  vorticity_bc_1 = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,vorticity_bc_1, maxiter=1.0e+05, tol=1.0e-05)
  vorticity_bc_1 = vorticity_bc_1[0].reshape((len(vorticity_bc_1[0]),1))
+
+
+ for i in range(0,len(dirichlet_pts[2])):
+  line = dirichlet_pts[2][i][0] - 1
+  v1 = dirichlet_pts[2][i][1] - 1
+  v2 = dirichlet_pts[2][i][2] - 1
+
+  if line == 7:
+   vorticity_bc_1[v1] = 0.0
+   vorticity_bc_1[v2] = 0.0
+
+   np.append(vorticity_ibc,v1)
+   np.append(vorticity_ibc,v2)
+
+ vorticity_ibc = np.unique(vorticity_ibc)
+
 
  # Gaussian elimination
  vorticity_bc_dirichlet = np.zeros([npoints,1], dtype = float)
  vorticity_bc_neumann = np.zeros([npoints,1], dtype = float)
  vorticity_bc_2 = np.ones([npoints,1], dtype = float)
 
- vorticity_LHS = ((np.copy(M)/dt) + (1.0/Re)*np.copy(Kzz) + (1.0/Re)*np.copy(Krr) - (1.0/Re)*np.copy(Gr1r) + (1.0/Re)*np.copy(M1r2)) 
+ vorticity_LHS = (np.copy(Mr)/dt) + (1.0/Re)*np.copy(Krrr) + (1.0/Re)*np.copy(Kzzr) - (1.0/Re)*np.copy(Gr) + (1.0/Re)*np.copy(M1r) - Mv
  for mm in vorticity_ibc:
   for nn in neighbors_nodes[mm]:
    vorticity_bc_dirichlet[nn] -= float(vorticity_LHS[nn,mm]*vorticity_bc_1[mm])
@@ -427,8 +454,8 @@ for t in tqdm(range(0, nt)):
 
    w_d = semi_lagrangian.Linear2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
 
-   A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
+   A = np.copy(Mr)/dt
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d)
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)
@@ -479,7 +506,7 @@ for t in tqdm(range(0, nt)):
  #---------- Step 4 - Solve the streamline equation --------------------------------
  # Solve Streamline
  # psi condition
- streamfunction_RHS = sps.lil_matrix.dot(Mr,w)
+ streamfunction_RHS = sps.lil_matrix.dot(Mr2,w)
  streamfunction_RHS = np.multiply(streamfunction_RHS,condition_streamfunction.bc_2)
  streamfunction_RHS = streamfunction_RHS + condition_streamfunction.bc_dirichlet
  psi = scipy.sparse.linalg.cg(condition_streamfunction.LHS,streamfunction_RHS,psi, maxiter=1.0e+05, tol=1.0e-05)
@@ -491,7 +518,7 @@ for t in tqdm(range(0, nt)):
  #---------- Step 5 - Compute the velocity field -----------------------------------
  # Velocity vz
  vz_old = np.copy(vz)
- zvelocity_RHS = sps.lil_matrix.dot(Gr1r,psi)
+ zvelocity_RHS = sps.lil_matrix.dot(Gr,psi)
  zvelocity_RHS = np.multiply(zvelocity_RHS,condition_zvelocity.bc_2)
  zvelocity_RHS = zvelocity_RHS + condition_zvelocity.bc_dirichlet
  vz = scipy.sparse.linalg.cg(condition_zvelocity.LHS,zvelocity_RHS,vz, maxiter=1.0e+05, tol=1.0e-05)
@@ -499,13 +526,28 @@ for t in tqdm(range(0, nt)):
  
  # Velocity vr
  vr_old = np.copy(vr)
- rvelocity_RHS = -sps.lil_matrix.dot(Gz1r,psi)
+ rvelocity_RHS = -sps.lil_matrix.dot(Gz,psi)
  rvelocity_RHS = np.multiply(rvelocity_RHS,condition_rvelocity.bc_2)
  rvelocity_RHS = rvelocity_RHS + condition_rvelocity.bc_dirichlet
  vr = scipy.sparse.linalg.cg(condition_rvelocity.LHS,rvelocity_RHS,vr, maxiter=1.0e+05, tol=1.0e-05)
  vr = vr[0].reshape((len(vr[0]),1))
  #----------------------------------------------------------------------------------
 
+
+
+ # ------------------------ Export VTK File ---------------------------------------
+ # Linear and Mini Elements
+ if polynomial_option == 1 or polynomial_option == 2:   
+  save = export_vtk.Linear2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
+  save.create_dir(directory_save)
+  save.saveVTK(directory_save + str(t))
+
+ # Quad Element
+ elif polynomial_option == 3:   
+  save = export_vtk.Quad2D(z,r,IEN,npoints,nelem,w,w,psi,vz,vr)
+  save.create_dir(directory_save)
+  save.saveVTK(directory_save + str(t))
+ # ---------------------------------------------------------------------------------
 
 
 
@@ -518,7 +560,7 @@ for t in tqdm(range(0, nt)):
  # ---------------------------------------------------------------------------------
 
  # ------------------------ CHECK CONVERGENCE RESULT ----------------------------------
- if np.linalg.norm(vz) > 10e1 or np.linalg.norm(vr) > 10e1:
+ if np.linalg.norm(vz) > 10e2 or np.linalg.norm(vr) > 10e2:
   end_type = 2
   break
  # ---------------------------------------------------------------------------------
