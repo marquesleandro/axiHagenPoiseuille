@@ -2054,6 +2054,119 @@ class AxiElement2D:
 
 
 
+ def assembleMv_mini(_self,_e):
+  _self.NUMNODE = 4  #Mini Triangular Element - 4 Nodes
+  
+  N = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+
+  dNdl1 = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  dNdl2 = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  
+  dzdl1 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  dzdl2 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  drdl1 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+  drdl2 = np.zeros([_self.NUMGAUSS,1], dtype = float)
+
+  dNdz = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+  dNdr = np.zeros([_self.NUMGAUSS,_self.NUMNODE], dtype = float)
+
+  J = np.zeros([2,2], dtype = float)
+  jacobian = np.zeros([_self.NUMGAUSS,1], dtype = float)
+
+
+
+  # A loop is required for each pair of coordinates (l1,l2)
+  for k in range(0,_self.NUMGAUSS):
+    
+   # Area Coordinates
+   L1 = _self.GQPoints[k][0]                                #L1 = l1
+   L2 = _self.GQPoints[k][1]                                #L2 = l2
+   L3 = 1.0 - _self.GQPoints[k][0] - _self.GQPoints[k][1]   #L3 = 1 - l1 - l2
+   
+   # Shape Functions
+   # Mini2D matlab Gustavo
+   N[k][0] = L1 - 9.0*L1*L2*L3    #N1 = L1-9*L1*L2*L3
+   N[k][1] = L2 - 9.0*L1*L2*L3    #N2 = L2-9*L1*L2*L3
+   N[k][2] = L3 - 9.0*L1*L2*L3    #N3 = L3-9*L1*L2*L3
+   N[k][3] = 27.0*L1*L2*L3        #N4 = 27*L1*L2*L3
+
+   # Shape Functions Derivatives in respect to l1
+   #dN1/dl1
+   dNdl1[k][0] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][1]**2\
+                 - 9.0*_self.GQPoints[k][1] + 1.0 
+
+   #dN2/dl1
+   dNdl1[k][1] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][1]**2\
+                 - 9.0*_self.GQPoints[k][1] 
+
+   #dN3/dl1
+   dNdl1[k][2] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][1]**2\
+                 - 9.0*_self.GQPoints[k][1] - 1.0
+
+   #dN4/dl1
+   dNdl1[k][3] =  27.0*(- 2.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] - _self.GQPoints[k][1]**2\
+                 + _self.GQPoints[k][1])
+
+
+   # Shape Functions Derivatives in respect to l2
+   #dN1/dl2
+   dNdl2[k][0] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][0]**2\
+                 - 9.0*_self.GQPoints[k][0] 
+
+   #dN2/dl2
+   dNdl2[k][1] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][0]**2\
+                 - 9.0*_self.GQPoints[k][0] + 1.0 
+
+   #dN3/dl2
+   dNdl2[k][2] =  18.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] + 9.0*_self.GQPoints[k][0]**2\
+                 - 9.0*_self.GQPoints[k][0] - 1.0
+
+   #dN4/dl2
+   dNdl2[k][3] =  27.0*(- 2.0*_self.GQPoints[k][0]*_self.GQPoints[k][1] - _self.GQPoints[k][0]**2\
+                 + _self.GQPoints[k][0])
+
+
+   # Coordinate Transfomation
+   # Lewis pag. 64 Eq. 3.108 for 1D
+   # Lewis pag. 66 Eq. 3.121 for 2D
+   for i in range(0,_self.NUMNODE):
+    ii = _self.IEN[_e][i]
+    
+    dzdl1[k] += _self.z[ii]*dNdl1[k][i]   # dx/dl1 = x1*dN1/dl1 + x2*dN2/dl1 + x3*dN3/dl1 ...
+    drdl1[k] += _self.r[ii]*dNdl1[k][i]   # dy/dl1 = y1*dN1/dl1 + y2*dN2/dl1 + y3*dN3/dl1 ...
+    dzdl2[k] += _self.z[ii]*dNdl2[k][i]   # dx/dl2 = x1*dN1/dl2 + x2*dN2/dl2 + x3*dN3/dl2 ...
+    drdl2[k] += _self.r[ii]*dNdl2[k][i]   # dy/dl2 = y1*dN1/dl2 + y2*dN2/dl2 + y3*dN3/dl2 ...
+
+   # Jacobian Matrix
+   # Lewis pag. 66 Eq. 3.121
+   J[0][0] = dzdl1[k]
+   J[0][1] = drdl1[k]
+   J[1][0] = dzdl2[k]
+   J[1][1] = drdl2[k]
+
+   jacobian[k] = np.linalg.det(J)
+
+
+   # Shape Functions Derivatives in respect to x and y
+   # Lewis pag. 65 Eq. 3.116
+   for i in range(0,_self.NUMNODE):
+    dNdz[k][i] = (1.0/jacobian[k])*( dNdl1[k][i]*drdl2[k] - dNdl2[k][i]*drdl1[k])
+    dNdr[k][i] = (1.0/jacobian[k])*(-dNdl1[k][i]*dzdl2[k] + dNdl2[k][i]*dzdl1[k])
+
+
+
+  _self.mass = np.zeros([_self.NUMNODE,_self.NUMNODE], dtype = float)
+
+  # Elementary Matrices
+  # P.S: It is divided by 2 due to relation 
+  # of parallelogram and triangle areas --> DxDy = (jacobian*Dl1*Dl2)/2
+  for k in range(0,_self.NUMGAUSS): 
+   for i in range(0,_self.NUMNODE):
+    for j in range(0,_self.NUMNODE):
+    
+     _self.mass[i][j] += N[k][i]*N[k][j]*jacobian[k]*_self.GQWeights[k]/2.0
+
+
 
 
 
