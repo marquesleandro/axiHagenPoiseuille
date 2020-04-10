@@ -392,8 +392,8 @@ def AxiAssembleMv(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _vr, 
    v5 = _IEN[e][4]
    v6 = _IEN[e][5]
 
-   #v_ele = (_vr[v1] + _vr[v2] + _vr[v3] + _vr[v4] + _vr[v5] + _vr[v6])/6.0
-   v_ele = (_vr[v1] + _vr[v2] + _vr[v3])/3.0
+   v_ele = (_vr[v1] + _vr[v2] + _vr[v3] + _vr[v4] + _vr[v5] + _vr[v6])/6.0
+   #v_ele = (_vr[v1] + _vr[v2] + _vr[v3])/3.0
   
    for i in range(0,_GL): 
     ii = _IEN[e][i]

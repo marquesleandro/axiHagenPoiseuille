@@ -118,7 +118,8 @@ elif polynomial_option == 2:
 
 # Quad Element
 elif polynomial_option == 3:
- mesh_name = 'malha_half_poiseuille_quad.msh'
+ #mesh_name = 'malha_half_poiseuille_quad.msh'
+ mesh_name = 'malha_half_poiseuille_quad1.msh'
  equation_number = 3
  
  directory = search_file.Find(mesh_name)
@@ -162,8 +163,9 @@ nphysical              = msh.nphysical
 
 CFL = 0.5
 #dt = float(CFL*length_min)
-#dt = 0.002
-dt = 0.1
+#dt = 0.05
+#dt = 0.1
+dt = 0.01
 Re = 100.0
 Sc = 1.0
 
@@ -257,25 +259,26 @@ elif polynomial_option == 2:
 elif polynomial_option == 3:
 
  # Applying vz condition
- zvelocity_LHS0 = sps.lil_matrix.copy(M)
- condition_zvelocity = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
- condition_zvelocity.neumann_condition(neumann_edges[1])
- condition_zvelocity.dirichlet_condition(dirichlet_pts[1])
- condition_zvelocity.gaussian_elimination(zvelocity_LHS0,neighbors_nodes)
+ zvelocity_LHS0 = sps.lil_matrix.copy(Mr)
+ condition_zvelocity = benchmark_problems.axiQuadHagenPoiseuille(nphysical,npoints,z,r)
+ condition_zvelocity.zVelocityProfile_condition(dirichlet_pts[1],zvelocity_LHS0,neighbors_nodes)
  vorticity_ibc = condition_zvelocity.ibc
  benchmark_problem = condition_zvelocity.benchmark_problem
 
  # Applying vr condition
- rvelocity_LHS0 = sps.lil_matrix.copy(M)
- condition_rvelocity = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
- condition_rvelocity.neumann_condition(neumann_edges[2])
- condition_rvelocity.dirichlet_condition(dirichlet_pts[2])
- condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
-
+ rvelocity_LHS0 = sps.lil_matrix.copy(Mr)
+ condition_rvelocity = benchmark_problems.axiQuadHagenPoiseuille(nphysical,npoints,z,r)
+ condition_rvelocity.rVelocityProfile_condition(dirichlet_pts[2],zvelocity_LHS0,neighbors_nodes)
+ 
  # Applying psi condition
- streamfunction_LHS0 = sps.lil_matrix.copy(Kzz) + sps.lil_matrix.copy(Krr) + sps.lil_matrix.copy(Gr1r)
- condition_streamfunction = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
+ streamfunction_LHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
+ condition_streamfunction = benchmark_problems.axiQuadHagenPoiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
+
+ # Applying vorticity condition
+ #condition_vorticity = benchmark_problems.axiQuadHagen_Poiseuille(nphysical,npoints,z,r)
+ #condition_vorticity.vorticity_condition(dirichlet_pts[4])
+ #vorticity_ibc = condition_vorticity.ibc
 # ---------------------------------------------------------------------------------
 
 
@@ -432,21 +435,38 @@ for t in tqdm(range(1, nt)):
  vorticity_bc_1 = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,vorticity_bc_1, maxiter=1.0e+05, tol=1.0e-05)
  vorticity_bc_1 = vorticity_bc_1[0].reshape((len(vorticity_bc_1[0]),1))
 
+ if polynomial_option == 1 or polynomial_option == 2:   
+  for i in range(0,len(dirichlet_pts[2])):
+   line = dirichlet_pts[2][i][0]
+   v1 = dirichlet_pts[2][i][1] - 1
+   v2 = dirichlet_pts[2][i][2] - 1
 
- for i in range(0,len(dirichlet_pts[2])):
-  line = dirichlet_pts[2][i][0] - 1
-  v1 = dirichlet_pts[2][i][1] - 1
-  v2 = dirichlet_pts[2][i][2] - 1
+   if line == 8:
+    vorticity_bc_1[v1] = 0.0
+    vorticity_bc_1[v2] = 0.0
 
-  if line == 7:
-   vorticity_bc_1[v1] = 0.0
-   vorticity_bc_1[v2] = 0.0
+    np.append(vorticity_ibc,v1)
+    np.append(vorticity_ibc,v2)
 
-   np.append(vorticity_ibc,v1)
-   np.append(vorticity_ibc,v2)
+  vorticity_ibc = np.unique(vorticity_ibc)
 
- vorticity_ibc = np.unique(vorticity_ibc)
+ elif polynomial_option == 3:
+  for i in range(0,len(dirichlet_pts[2])):
+   line = dirichlet_pts[2][i][0]
+   v1 = dirichlet_pts[2][i][1] - 1
+   v2 = dirichlet_pts[2][i][2] - 1
+   v3 = dirichlet_pts[2][i][3] - 1
 
+   if line == 8:
+    vorticity_bc_1[v1] = 0.0
+    vorticity_bc_1[v2] = 0.0
+    vorticity_bc_1[v3] = 0.0
+
+    np.append(vorticity_ibc,v1)
+    np.append(vorticity_ibc,v2)
+    np.append(vorticity_ibc,v3)
+
+  vorticity_ibc = np.unique(vorticity_ibc)
 
  # Gaussian elimination
  vorticity_bc_dirichlet = np.zeros([npoints,1], dtype = float)
@@ -528,8 +548,8 @@ for t in tqdm(range(1, nt)):
 
    w_d = semi_lagrangian.Quad2D(npoints, neighbors_elements, IEN, z, r, vz, vr, dt, w)
 
-   A = np.copy(M)/dt
-   vorticity_RHS = sps.lil_matrix.dot(A,w_d) + np.multiply(vr,sps.lil_matrix.dot(M1r,w)) 
+   A = np.copy(Mr)/dt
+   vorticity_RHS = sps.lil_matrix.dot(A,w_d)
 
    vorticity_RHS = vorticity_RHS + (1.0/Re)*vorticity_bc_neumann
    vorticity_RHS = np.multiply(vorticity_RHS,vorticity_bc_2)

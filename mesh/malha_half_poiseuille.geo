@@ -6,7 +6,7 @@ lc = DefineNumber[ 0.02, Name "Parameters/lc" ];
 // normalV should be at Y=0.0 and everything else above. 
 // This number makes the average channel diameter equal to 1.
 xMax = 10.0000;
-symY = 0.5;
+symY = 1.0;
 Point(1)={0.000000,symY-0,0,lc}; 
 Point(2)={1.725,symY-0,0,lc}; 
 Point(3)={8.275,symY-0,0,lc}; 
@@ -30,7 +30,7 @@ Physical Line("dirichlet1 inflow") = {6};
 Physical Line("neumann1 symmetric") = {5};
 Physical Line("dirichlet2 noslip top") = {1,2,3};
 Physical Line("neumann2 outflow") = {4};
-Physical Line("neumann2 inflow") = {6};
+Physical Line("dirichlet2 inflow") = {6};
 Physical Line("dirichlet2 symmetric") = {5};
 Physical Line("dirichlet3 symmetric") = {5};
 Physical Line("neumann3 outflow") = {4};

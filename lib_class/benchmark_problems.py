@@ -1276,31 +1276,7 @@ class axiHagenPoiseuille:
 
 
  
-
-class axiQuadHalf_Poiseuille:
-
- # ------------------------------------------------------------------------------------------------------
- # Use:
-
- # # Applying vx condition
- # condition_xvelocity = bc_apply.Poiseuille(mesh.nphysical,mesh.npoints,mesh.x,mesh.y)
- # condition_xvelocity.neumann_condition(mesh.neumann_edges[1])
- # condition_xvelocity.dirichlet_condition(mesh.dirichlet_pts[1])
- # condition_xvelocity.gaussian_elimination(LHS_vx0,mesh.neighbors_nodes)
- # vorticity_ibc = condition_xvelocity.ibc
-
- # # Applying vy condition
- # condition_yvelocity = bc_apply.Poiseuille(mesh.nphysical,mesh.npoints,mesh.x,mesh.y)
- # condition_yvelocity.neumann_condition(mesh.neumann_edges[2])
- # condition_yvelocity.dirichlet_condition(mesh.dirichlet_pts[2])
- # condition_yvelocity.gaussian_elimination(LHS_vy0,mesh.neighbors_nodes)
-
- # # Applying psi condition
- # condition_streamfunction = bc_apply.Poiseuille(mesh.nphysical,mesh.npoints,mesh.x,mesh.y)
- # condition_streamfunction.streamfunction_condition(mesh.dirichlet_pts[3],LHS_psi0,mesh.neighbors_nodes)
- # ------------------------------------------------------------------------------------------------------
-
-
+class axiQuadHagenPoiseuille:
  def __init__(_self, _nphysical, _npoints, _z, _r):
   _self.nphysical = _nphysical
   _self.npoints = _npoints
@@ -1309,76 +1285,48 @@ class axiQuadHalf_Poiseuille:
   _self.bc = np.zeros([_self.nphysical,1], dtype = float) 
   _self.benchmark_problem = 'Axi Quad Hagen Poiseuille'
 
-  # Velocity vx condition
-  _self.bc[0][0] = 0.0
-  _self.bc[1][0] = 0.0
-  _self.bc[2][0] = 1.0
-  _self.bc[3][0] = 0.0
 
-  # Velocity vy condition
-  _self.bc[4][0] = 0.0
-  _self.bc[5][0] = 0.0
-  _self.bc[6][0] = 0.0
-  _self.bc[7][0] = 0.0
-
-
- def neumann_condition(_self, _neumann_edges):
-  _self.bc_neumann = np.zeros([_self.npoints,1], dtype = float) 
-  _self.neumann_edges = _neumann_edges 
- 
-  for i in range(0, len(_self.neumann_edges)):
-   line = _self.neumann_edges[i][0] - 1
-   v1 = _self.neumann_edges[i][1] - 1
-   v2 = _self.neumann_edges[i][2] - 1
-   v3 = _self.neumann_edges[i][3] - 1
-
-   z1 = _self.z[v1] - _self.z[v3]
-   r1 = _self.r[v1] - _self.r[v3]
-   length1 = np.sqrt(z1**2 + r1**2)
-
-   z2 = _self.z[v3] - _self.z[v2]
-   r2 = _self.r[v3] - _self.r[v2]
-   length2 = np.sqrt(z2**2 + r2**2)
- 
-
-   _self.bc_neumann[v1] += (_self.bc[line]*length1) / 2.0 
-   _self.bc_neumann[v2] += (_self.bc[line]*length2) / 2.0 
-   _self.bc_neumann[v3] += ((_self.bc[line]*length1) / 2.0) + ((_self.bc[line]*length2) / 2.0) 
-
-
- def dirichlet_condition(_self, _dirichlet_pts):
+ def zVelocityProfile_condition(_self, _dirichlet_pts, _LHS0, _neighbors_nodes):
   _self.bc_dirichlet = np.zeros([_self.npoints,1], dtype = float) 
   _self.ibc = [] 
   _self.bc_1 = np.zeros([_self.npoints,1], dtype = float) #For scipy array solve
+  _self.bc_2 = np.ones([_self.npoints,1], dtype = float) 
+  _self.LHS = sps.lil_matrix.copy(_LHS0)
   _self.dirichlet_pts = _dirichlet_pts
- 
+  _self.neighbors_nodes = _neighbors_nodes
 
+  u_max = 2.0
+  R = 1.0
+  # Dirichlet condition
   for i in range(0, len(_self.dirichlet_pts)):
-   line = _self.dirichlet_pts[i][0] - 1
+   line = _self.dirichlet_pts[i][0]
    v1 = _self.dirichlet_pts[i][1] - 1
    v2 = _self.dirichlet_pts[i][2] - 1
    v3 = _self.dirichlet_pts[i][3] - 1
 
-   _self.bc_1[v1] = _self.bc[line]
-   _self.bc_1[v2] = _self.bc[line]
-   _self.bc_1[v3] = _self.bc[line]
+   if line == 1:
+    _self.bc_1[v1] = 0.0
+    _self.bc_1[v2] = 0.0
+    _self.bc_1[v3] = 0.0
+ 
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+    _self.ibc.append(v3)
 
-   _self.bc_neumann[v1] = 0.0 #Dirichlet condition is preferential
-   _self.bc_neumann[v2] = 0.0 #Dirichlet condition is preferential
-   _self.bc_neumann[v3] = 0.0 #Dirichlet condition is preferential
+   elif line == 3:
+    _self.bc_1[v1] = (u_max/(R**2))*(R**2 - _self.r[v1]**2)
+    _self.bc_1[v2] = (u_max/(R**2))*(R**2 - _self.r[v2]**2)
+    _self.bc_1[v3] = (u_max/(R**2))*(R**2 - _self.r[v3]**2)
 
-   _self.ibc.append(v1)
-   _self.ibc.append(v2)
-   _self.ibc.append(v3)
-   
+
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+    _self.ibc.append(v3)
+
   _self.ibc = np.unique(_self.ibc)
 
 
- def gaussian_elimination(_self, _LHS0, _neighbors_nodes):
-  _self.LHS = sps.lil_matrix.copy(_LHS0)
-  _self.bc_2 = np.ones([_self.npoints,1], dtype = float) 
-  _self.neighbors_nodes = _neighbors_nodes
-
+  # Gaussian elimination for vz
   for mm in _self.ibc:
    for nn in _self.neighbors_nodes[mm]:
     _self.bc_dirichlet[nn] -= float(_self.LHS[nn,mm]*_self.bc_1[mm])
@@ -1390,24 +1338,25 @@ class axiQuadHalf_Poiseuille:
    _self.bc_2[mm] = 0.0
  
 
-
- def streamfunction_condition(_self, _dirichlet_pts, _LHS0, _neighbors_nodes):
+ def rVelocityProfile_condition(_self, _dirichlet_pts, _LHS0, _neighbors_nodes):
   _self.bc_dirichlet = np.zeros([_self.npoints,1], dtype = float) 
   _self.ibc = [] 
   _self.bc_1 = np.zeros([_self.npoints,1], dtype = float) #For scipy array solve
   _self.bc_2 = np.ones([_self.npoints,1], dtype = float) 
-  _self.LHS = sps.csr_matrix.copy(_LHS0) #used csr matrix because LHS = lil_matrix + lil_matrix
+  _self.LHS = sps.lil_matrix.copy(_LHS0)
   _self.dirichlet_pts = _dirichlet_pts
   _self.neighbors_nodes = _neighbors_nodes
 
+  u_max = 2.0
+  R = 1.0
   # Dirichlet condition
   for i in range(0, len(_self.dirichlet_pts)):
-   line = _self.dirichlet_pts[i][0] - 1
+   line = _self.dirichlet_pts[i][0]
    v1 = _self.dirichlet_pts[i][1] - 1
    v2 = _self.dirichlet_pts[i][2] - 1
    v3 = _self.dirichlet_pts[i][3] - 1
 
-   if line == 8:
+   if line == 5:
     _self.bc_1[v1] = 0.0
     _self.bc_1[v2] = 0.0
     _self.bc_1[v3] = 0.0
@@ -1417,20 +1366,75 @@ class axiQuadHalf_Poiseuille:
     _self.ibc.append(v3)
 
 
-   elif line == 11:
-    _self.bc_1[v1] = 0.5
-    _self.bc_1[v2] = 0.5
-    _self.bc_1[v3] = 0.5
-
+   elif line == 7:
+    _self.bc_1[v1] = 0.0
+    _self.bc_1[v2] = 0.0
+    _self.bc_1[v3] = 0.0
+ 
     _self.ibc.append(v1)
     _self.ibc.append(v2)
     _self.ibc.append(v3)
 
 
-   elif line == 10:
-    _self.bc_1[v1] = (_self.r[v1]**2)/2.0
-    _self.bc_1[v2] = (_self.r[v2]**2)/2.0
-    _self.bc_1[v3] = (_self.r[v3]**2)/2.0
+   elif line == 8:
+    _self.bc_1[v1] = 0.0
+    _self.bc_1[v2] = 0.0
+    _self.bc_1[v3] = 0.0
+ 
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+    _self.ibc.append(v3)
+
+  _self.ibc = np.unique(_self.ibc)
+
+
+  # Gaussian elimination for vr
+  for mm in _self.ibc:
+   for nn in _self.neighbors_nodes[mm]:
+    _self.bc_dirichlet[nn] -= float(_self.LHS[nn,mm]*_self.bc_1[mm])
+    _self.LHS[nn,mm] = 0.0
+    _self.LHS[mm,nn] = 0.0
+   
+   _self.LHS[mm,mm] = 1.0
+   _self.bc_dirichlet[mm] = _self.bc_1[mm]
+   _self.bc_2[mm] = 0.0
+ 
+
+ def streamfunction_condition(_self, _dirichlet_pts, _LHS0, _neighbors_nodes):
+  _self.bc_dirichlet = np.zeros([_self.npoints,1], dtype = float) 
+  _self.ibc = [] 
+  _self.bc_1 = np.zeros([_self.npoints,1], dtype = float) #For scipy array solve
+  _self.bc_2 = np.ones([_self.npoints,1], dtype = float) 
+  _self.LHS = sps.csr_matrix.copy(_LHS0) #used csr matrix because LHS = lil_matrix + lil_matrix
+  _self.dirichlet_pts = _dirichlet_pts
+  _self.neighbors_nodes = _neighbors_nodes
+  u_max = 2.0
+  R = 1.0
+
+  # Dirichlet condition
+  for i in range(0, len(_self.dirichlet_pts)):
+   line = _self.dirichlet_pts[i][0]
+   v1 = _self.dirichlet_pts[i][1] - 1
+   v2 = _self.dirichlet_pts[i][2] - 1
+   v3 = _self.dirichlet_pts[i][3] - 1
+
+   # psi_bottom can be any value. Because, important is psi_top - psi_bottom.
+   # In this case, psi_bottom is zero
+   if line == 9:
+    _self.bc_1[v1] = 0.0
+    _self.bc_1[v2] = 0.0
+    _self.bc_1[v3] = 0.0
+ 
+    _self.ibc.append(v1)
+    _self.ibc.append(v2)
+    _self.ibc.append(v3)
+
+   # Ref: Batchelor 1967 pag. 78 eq. 2.2.12
+   # As psi_bottom is zero, so psi_top is:
+   elif line == 12:
+    _self.bc_1[v1] = (u_max/4.0)*(R**2)
+    _self.bc_1[v2] = (u_max/4.0)*(R**2)
+    _self.bc_1[v3] = (u_max/4.0)*(R**2)
 
     _self.ibc.append(v1)
     _self.ibc.append(v2)
@@ -1452,4 +1456,23 @@ class axiQuadHalf_Poiseuille:
  
 
 
+ def vorticity_condition(_self, _dirichlet_pts):
+  _self.ibc = [] 
+  _self.dirichlet_pts = _dirichlet_pts
+ 
+
+  for i in range(0, len(_self.dirichlet_pts)):
+   line = _self.dirichlet_pts[i][0]
+   v1 = _self.dirichlet_pts[i][1] - 1
+   v2 = _self.dirichlet_pts[i][2] - 1
+   v3 = _self.dirichlet_pts[i][3] - 1
+
+   _self.ibc.append(v1)
+   _self.ibc.append(v2)
+   _self.ibc.append(v3)
+   
+  _self.ibc = np.unique(_self.ibc)
+
+
+ 
 
