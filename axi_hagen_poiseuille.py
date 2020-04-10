@@ -203,26 +203,19 @@ if polynomial_option == 1:
 
  # Applying vz condition
  zvelocity_LHS0 = sps.lil_matrix.copy(Mr)
- #condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
- #condition_zvelocity.neumann_condition(neumann_edges[1])
- #condition_zvelocity.dirichlet_condition(dirichlet_pts[1])
- #condition_zvelocity.gaussian_elimination(zvelocity_LHS0,neighbors_nodes)
-
- condition_zvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
+ condition_zvelocity = benchmark_problems.axiHagenPoiseuille(nphysical,npoints,z,r)
  condition_zvelocity.zVelocityProfile_condition(dirichlet_pts[1],zvelocity_LHS0,neighbors_nodes)
  vorticity_ibc = condition_zvelocity.ibc
  benchmark_problem = condition_zvelocity.benchmark_problem
 
  # Applying vr condition
  rvelocity_LHS0 = sps.lil_matrix.copy(Mr)
- condition_rvelocity = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
- condition_rvelocity.neumann_condition(neumann_edges[2])
- condition_rvelocity.dirichlet_condition(dirichlet_pts[2])
- condition_rvelocity.gaussian_elimination(rvelocity_LHS0,neighbors_nodes)
-
+ condition_rvelocity = benchmark_problems.axiHagenPoiseuille(nphysical,npoints,z,r)
+ condition_rvelocity.rVelocityProfile_condition(dirichlet_pts[2],zvelocity_LHS0,neighbors_nodes)
+ 
  # Applying psi condition
  streamfunction_LHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
- condition_streamfunction = benchmark_problems.axiHagen_Poiseuille(nphysical,npoints,z,r)
+ condition_streamfunction = benchmark_problems.axiHagenPoiseuille(nphysical,npoints,z,r)
  condition_streamfunction.streamfunction_condition(dirichlet_pts[3],streamfunction_LHS0,neighbors_nodes)
 
  # Applying vorticity condition
