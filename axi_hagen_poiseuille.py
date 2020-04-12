@@ -89,9 +89,7 @@ start_time = time()
 
 # Linear Element
 if polynomial_option == 1:
- #mesh_name = 'malha_hagen_poiseuille.msh'
- mesh_name = 'malha_half_poiseuille.msh'
- #mesh_name = 'malha_half_poiseuille20.msh'
+ mesh_name = 'malha_hagen_poiseuille.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -105,7 +103,7 @@ if polynomial_option == 1:
 
 # Mini Element
 elif polynomial_option == 2:
- mesh_name = 'malha_half_poiseuille.msh'
+ mesh_name = 'malha_hagen_poiseuille.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
@@ -118,8 +116,7 @@ elif polynomial_option == 2:
 
 # Quad Element
 elif polynomial_option == 3:
- #mesh_name = 'malha_half_poiseuille_quad.msh'
- mesh_name = 'malha_half_poiseuille_quad1.msh'
+ mesh_name = 'malha_hagen_poiseuille_quad.msh'
  equation_number = 3
  
  directory = search_file.Find(mesh_name)
@@ -132,7 +129,7 @@ elif polynomial_option == 3:
 
 # Cubic Element
 elif polynomial_option == 4:
- mesh_name = 'malha_half_poiseuille_cubic.msh'
+ mesh_name = 'malha_hagen_poiseuille_cubic.msh'
  equation_number = 3
 
  directory = search_file.Find(mesh_name)
