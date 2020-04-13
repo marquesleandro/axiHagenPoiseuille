@@ -160,9 +160,8 @@ nphysical              = msh.nphysical
 
 CFL = 0.5
 #dt = float(CFL*length_min)
-#dt = 0.05
-dt = 0.1
-#dt = 0.01
+dt = 0.1   #linear
+#dt = 0.05  #quad
 Re = 100.0
 Sc = 1.0
 
@@ -328,6 +327,10 @@ print ' -----------------------------'
 print ' PARAMETERS OF THE SIMULATION:'
 print ' -----------------------------'
 
+print ' Benchmark Problem: %s' %benchmark_problem
+print ' Scheme: %s' %str(scheme_option)
+print ' Element Type: %s' %str(polynomial_order)
+print ' Gaussian Quadrature (Gauss Points): %s' %str(gausspoints)
 print ' Mesh: %s' %mesh_name
 print ' Number of equation: %s' %equation_number
 print ' Number of nodes: %s' %npoints
@@ -389,7 +392,11 @@ for t in tqdm(range(1, nt)):
  print ' -----------------------------'
  print ' PARAMETERS OF THE SIMULATION:'
  print ' -----------------------------'
- 
+
+ print ' Benchmark Problem: %s' %benchmark_problem
+ print ' Scheme: %s' %str(scheme_option)
+ print ' Element Type: %s' %str(polynomial_order)
+ print ' Gaussian Quadrature (Gauss Points): %s' %str(gausspoints)
  print ' Mesh: %s' %mesh_name
  print ' Number of equation: %s' %equation_number
  print ' Number of nodes: %s' %npoints
@@ -432,38 +439,38 @@ for t in tqdm(range(1, nt)):
  vorticity_bc_1 = scipy.sparse.linalg.cg(vorticity_LHS,vorticity_RHS,vorticity_bc_1, maxiter=1.0e+05, tol=1.0e-05)
  vorticity_bc_1 = vorticity_bc_1[0].reshape((len(vorticity_bc_1[0]),1))
 
- if polynomial_option == 1 or polynomial_option == 2:   
-  for i in range(0,len(dirichlet_pts[2])):
-   line = dirichlet_pts[2][i][0]
-   v1 = dirichlet_pts[2][i][1] - 1
-   v2 = dirichlet_pts[2][i][2] - 1
-
-   if line == 8:
-    vorticity_bc_1[v1] = 0.0
-    vorticity_bc_1[v2] = 0.0
-
-    np.append(vorticity_ibc,v1)
-    np.append(vorticity_ibc,v2)
-
-  vorticity_ibc = np.unique(vorticity_ibc)
-
- elif polynomial_option == 3:
-  for i in range(0,len(dirichlet_pts[2])):
-   line = dirichlet_pts[2][i][0]
-   v1 = dirichlet_pts[2][i][1] - 1
-   v2 = dirichlet_pts[2][i][2] - 1
-   v3 = dirichlet_pts[2][i][3] - 1
-
-   if line == 8:
-    vorticity_bc_1[v1] = 0.0
-    vorticity_bc_1[v2] = 0.0
-    vorticity_bc_1[v3] = 0.0
-
-    np.append(vorticity_ibc,v1)
-    np.append(vorticity_ibc,v2)
-    np.append(vorticity_ibc,v3)
-
-  vorticity_ibc = np.unique(vorticity_ibc)
+ # if polynomial_option == 1 or polynomial_option == 2:   
+ #  for i in range(0,len(dirichlet_pts[2])):
+ #   line = dirichlet_pts[2][i][0]
+ #   v1 = dirichlet_pts[2][i][1] - 1
+ #   v2 = dirichlet_pts[2][i][2] - 1
+ #
+ #   if line == 8:
+ #    vorticity_bc_1[v1] = 0.0
+ #    vorticity_bc_1[v2] = 0.0
+ #
+ #    np.append(vorticity_ibc,v1)
+ #    np.append(vorticity_ibc,v2)
+ #
+ #  vorticity_ibc = np.unique(vorticity_ibc)
+ #
+ # elif polynomial_option == 3:
+ #  for i in range(0,len(dirichlet_pts[2])):
+ #   line = dirichlet_pts[2][i][0]
+ #   v1 = dirichlet_pts[2][i][1] - 1
+ #   v2 = dirichlet_pts[2][i][2] - 1
+ #   v3 = dirichlet_pts[2][i][3] - 1
+ #
+ #   if line == 8:
+ #    vorticity_bc_1[v1] = 0.0
+ #    vorticity_bc_1[v2] = 0.0
+ #    vorticity_bc_1[v3] = 0.0
+ #
+ #    np.append(vorticity_ibc,v1)
+ #    np.append(vorticity_ibc,v2)
+ #    np.append(vorticity_ibc,v3)
+ #
+ #  vorticity_ibc = np.unique(vorticity_ibc)
 
  # Gaussian elimination
  vorticity_bc_dirichlet = np.zeros([npoints,1], dtype = float)
