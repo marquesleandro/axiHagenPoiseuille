@@ -767,21 +767,33 @@ class Quad2D:
    _self.nodes_quad.append(v5)  
    _self.nodes_quad.append(v6)  
 
-   x_a = _self.x[v1] - _self.x[v2]
-   x_b = _self.x[v2] - _self.x[v3]
-   x_c = _self.x[v3] - _self.x[v1]
+   x_a = _self.x[v1] - _self.x[v4]
+   x_b = _self.x[v4] - _self.x[v2]
+   x_c = _self.x[v2] - _self.x[v5]
+   x_d = _self.x[v5] - _self.x[v3]
+   x_e = _self.x[v3] - _self.x[v6]
+   x_f = _self.x[v6] - _self.x[v1]
    
-   y_a = _self.y[v1] - _self.y[v2]
-   y_b = _self.y[v2] - _self.y[v3]
-   y_c = _self.y[v3] - _self.y[v1]
+   y_a = _self.y[v1] - _self.y[v4]
+   y_b = _self.y[v4] - _self.y[v2]
+   y_c = _self.y[v2] - _self.y[v5]
+   y_d = _self.y[v5] - _self.y[v3]
+   y_e = _self.y[v3] - _self.y[v6]
+   y_f = _self.y[v6] - _self.y[v1]
    
    length1 = np.sqrt(x_a**2 + y_a**2)
    length2 = np.sqrt(x_b**2 + y_b**2)
    length3 = np.sqrt(x_c**2 + y_c**2)
+   length4 = np.sqrt(x_d**2 + y_d**2)
+   length5 = np.sqrt(x_e**2 + y_e**2)
+   length6 = np.sqrt(x_f**2 + y_f**2)
 
    length.append(length1)
    length.append(length2)
    length.append(length3)
+   length.append(length4)
+   length.append(length5)
+   length.append(length6)
    
   _self.length_min = min(length)
 
