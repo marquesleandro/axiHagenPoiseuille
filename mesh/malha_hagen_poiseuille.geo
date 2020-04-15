@@ -24,17 +24,9 @@ Line(6)={6,1};
 Line Loop(11) = {3, 4, 5, 6, 1, 2};
 Plane Surface(11) = {11};
 
-Physical Line("dirichlet1 noslip top") = {1,2,3};
-Physical Line("neumann1 outflow") = {4};
-Physical Line("dirichlet1 inflow") = {6};
-Physical Line("neumann1 symmetric") = {5};
-Physical Line("dirichlet2 noslip top") = {1,2,3};
-Physical Line("neumann2 outflow") = {4};
-Physical Line("dirichlet2 inflow") = {6};
-Physical Line("dirichlet2 symmetric") = {5};
-Physical Line("dirichlet3 symmetric") = {5};
-Physical Line("neumann3 outflow") = {4};
-Physical Line("neumann3 inflow") = {6};
-Physical Line("dirichlet3 top") = {1,2,3};
+Physical Line("noslip") = {1,2,3};
+Physical Line("outflow") = {4};
+Physical Line("inflow") = {6};
+Physical Line("symmetric") = {5};
 
 Physical Surface(11) = {11};

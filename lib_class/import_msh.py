@@ -16,25 +16,25 @@ class Linear1D:
  def __init__(_self, _dir, _file, _number_equations):
   _self.name = _dir + '/' + _file
   _self.neq = _number_equations
-  _self.gmsh = []
+  _self.mshFile = []
   _self.neumann_lines = {}
   _self.neumann_pts = {}
   _self.dirichlet_lines = {}
   _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+  _self.far_neighborsNodes = {}
+  _self.far_neighborsElements = {}
 
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
   
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
   
   for i in range(1, _self.neq + 1):
    _self.neumann_lines[i] = []
@@ -43,37 +43,37 @@ class Linear1D:
    _self.dirichlet_pts[i] = []
 
   # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
+  for i in range(0,_self.numPhysical):
    for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
+    if _self.mshFile[5+i][2] == '"neumann' + str(j):
+     _self.neumann_lines[j].append(int(_self.mshFile[5+i][1]))
 
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
+    elif _self.mshFile[5+i][2] == '"dirichlet' + str(j):
+     _self.dirichlet_lines[j].append(int(_self.mshFile[5+i][1]))
 
 
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   # Assembly of the neumann edges and dirichlet points
-  while element_type == 15:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
+  while mshFileElementType == 15:
+    a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+    a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
     a_3 = [a_1,a_2]
    
     for i in range(1, _self.neq + 1): 
      if a_1 in _self.neumann_lines[i]:
       _self.neumann_pts[i].append(a_3)
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
      elif a_1 in _self.dirichlet_lines[i]:
       _self.dirichlet_pts[i].append(a_3)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
    
   for i in range(1, _self.neq + 1):
@@ -81,65 +81,65 @@ class Linear1D:
    _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
+  for i in range(0, _self.numNodes):
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
+   _self.far_neighborsNodes[i] = []
+   _self.far_neighborsElements[i] = []
 
 
-  _self.ii = ii
-  _self.jj = jj
+  countLine = countLine
+  countLineStart = countLineStart
 
 
  def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
+  for i in range(0, _self.numNodes):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
    _self.npts.append(i)
 
 
  def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,2], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
+  _self.IEN = np.zeros([_self.numElements,2], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
   length = [] 
 
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
   
    _self.IEN[e] = [v1,v2]
   
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
    
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
 
    x_a = _self.x[v1] - _self.x[v2]
    length1 = np.sqrt(x_a**2)
    length.append(length1)
 
-  _self.length_min = min(length)
+  _self.minLengthMesh = min(length)
 
 
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
+  for i in range(0, _self.numNodes):
+   for j in _self.neighborsNodes[i]:
+    _self.far_neighborsNodes[i].extend(_self.neighborsNodes[j]) 
+    _self.far_neighborsElements[i].extend(_self.neighborsElements[j]) 
  
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
+   _self.far_neighborsNodes[i] = list(set(_self.far_neighborsNodes[i])\
+                                     - set(_self.neighborsNodes[i]))
    
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+   _self.far_neighborsElements[i] = list(set(_self.far_neighborsElements[i])\
+                                        - set(_self.neighborsElements[i]))
 
 
 
@@ -147,25 +147,25 @@ class Quad1D:
  def __init__(_self, _dir, _file, _number_equations):
   _self.name = _dir + '/' + _file
   _self.neq = _number_equations
-  _self.gmsh = []
+  _self.mshFile = []
   _self.neumann_lines = {}
   _self.neumann_pts = {}
   _self.dirichlet_lines = {}
   _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+  _self.far_neighborsNodes = {}
+  _self.far_neighborsElements = {}
 
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
   
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
   
   for i in range(1, _self.neq + 1):
    _self.neumann_lines[i] = []
@@ -174,37 +174,37 @@ class Quad1D:
    _self.dirichlet_pts[i] = []
 
   # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
+  for i in range(0,_self.numPhysical):
    for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
+    if _self.mshFile[5+i][2] == '"neumann' + str(j):
+     _self.neumann_lines[j].append(int(_self.mshFile[5+i][1]))
 
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
+    elif _self.mshFile[5+i][2] == '"dirichlet' + str(j):
+     _self.dirichlet_lines[j].append(int(_self.mshFile[5+i][1]))
 
 
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   # Assembly of the neumann edges and dirichlet points
-  while element_type == 15:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
+  while mshFileElementType == 15:
+    a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+    a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
     a_3 = [a_1,a_2]
    
     for i in range(1, _self.neq + 1): 
      if a_1 in _self.neumann_lines[i]:
       _self.neumann_pts[i].append(a_3)
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
      elif a_1 in _self.dirichlet_lines[i]:
       _self.dirichlet_pts[i].append(a_3)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
    
   for i in range(1, _self.neq + 1):
@@ -212,192 +212,152 @@ class Quad1D:
    _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
+  for i in range(0, _self.numNodes):
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
+   _self.far_neighborsNodes[i] = []
+   _self.far_neighborsElements[i] = []
 
 
-  _self.ii = ii
-  _self.jj = jj
+  countLine = countLine
+  countLineStart = countLineStart
 
 
  def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
+  for i in range(0, _self.numNodes):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
    _self.npts.append(i)
 
 
  def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,3], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
+  _self.IEN = np.zeros([_self.numElements,3], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
   length = [] 
 
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
-   v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
+   v3 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][7]) - 1
   
    _self.IEN[e] = [v1,v2,v3]
   
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v3].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v3].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
-   _self.neighbors_nodes[v3] = list(set(_self.neighbors_nodes[v2]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
+   _self.neighborsNodes[v3] = list(set(_self.neighborsNodes[v2]))
 
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
-   _self.neighbors_elements[v3].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
+   _self.neighborsElements[v3].append(e)  
 
    x_a = _self.x[v1] - _self.x[v2]
    length1 = np.sqrt(x_a**2)
    length.append(length1)
 
-  _self.length_min = min(length)
+  _self.minLengthMesh = min(length)
 
 
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
+  for i in range(0, _self.numNodes):
+   for j in _self.neighborsNodes[i]:
+    _self.far_neighborsNodes[i].extend(_self.neighborsNodes[j]) 
+    _self.far_neighborsElements[i].extend(_self.neighborsElements[j]) 
  
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
+   _self.far_neighborsNodes[i] = list(set(_self.far_neighborsNodes[i])\
+                                     - set(_self.neighborsNodes[i]))
    
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+   _self.far_neighborsElements[i] = list(set(_self.far_neighborsElements[i])\
+                                        - set(_self.neighborsElements[i]))
 
 
 
 
 class Linear2D:
- def __init__(_self, _dir, _file, _number_equations):
+ def __init__(_self, _dir, _file):
   _self.name = _dir + '/' + _file
-  _self.neq = _number_equations
-  _self.gmsh = []
-  _self.neumann_lines = {}
-  _self.dirichlet_lines = {}
-  _self.neumann_edges = {}
-  _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.mshFile = []
+  _self.boundaryEdges = []
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+
 
   
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
-  
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
-  
-  for i in range(1, _self.neq + 1):
-   _self.neumann_lines[i] = []
-   _self.neumann_edges[i] = []
-   _self.dirichlet_lines[i] = []
-   _self.dirichlet_pts[i] = []
-
-
-  # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
-   for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
-
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
-
-
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
-
-  # Assembly of the neumann edges and dirichlet points
-  while element_type == 1:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
-    a_3 = int(_self.gmsh[(jj + 10 + ii)][6])
-    a_4 = [a_1,a_2,a_3]
-   
-    for i in range(1, _self.neq + 1): 
-     if a_1 in _self.neumann_lines[i]:
-      _self.neumann_edges[i].append(a_4)
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
  
-     elif a_1 in _self.dirichlet_lines[i]:
-      _self.dirichlet_pts[i].append(a_4)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  # Boundary edges Assembly
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
+  while mshFileElementType == 1:
+   a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+   a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
+   a_3 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
+   a_4 = [a_1,a_2,a_3]
    
-  for i in range(1, _self.neq + 1):
-   _self.neumann_edges[i] = np.array(_self.neumann_edges[i]) 
-   _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
+   _self.boundaryEdges.append(a_4)
+ 
+   countLine = countLine + 1
+   mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
+ 
+  _self.boundaryEdges = np.array(_self.boundaryEdges) 
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
-
-
-  _self.ii = ii
-  _self.jj = jj
-
-
- def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
-  _self.y = np.zeros([_self.npoints,1], dtype = float)
+  # Coordinate vectors Assembly
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
+  _self.y = np.zeros([_self.numNodes,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
-   _self.y[i] = _self.gmsh[_self.nphysical + 8 + i][2]
+  for i in range(0, _self.numNodes):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
+   _self.y[i] = _self.mshFile[_self.numPhysical + 8 + i][2]
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
    _self.npts.append(i)
 
 
- def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,3], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
+
+  # IEN matrix and Neighbors list Assembly
+  _self.IEN = np.zeros([_self.numElements,3], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
   length = []
 
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
-   v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
+   v3 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][7]) - 1
   
    _self.IEN[e] = [v1,v2,v3]
   
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v3].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v3].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
-   _self.neighbors_nodes[v3] = list(set(_self.neighbors_nodes[v3]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
+   _self.neighborsNodes[v3] = list(set(_self.neighborsNodes[v3]))
    
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
-   _self.neighbors_elements[v3].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
+   _self.neighborsElements[v3].append(e)  
 
    x_a = _self.x[v1] - _self.x[v2]
    x_b = _self.x[v2] - _self.x[v3]
@@ -415,18 +375,7 @@ class Linear2D:
    length.append(length2)
    length.append(length3)
    
-  _self.length_min = min(length)
-
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
- 
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
-   
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+  _self.minLengthMesh = min(length)
 
 
 
@@ -434,28 +383,28 @@ class Mini2D:
  def __init__(_self, _dir, _file, _number_equations):
   _self.name = _dir + '/' + _file
   _self.neq = _number_equations
-  _self.gmsh = []
+  _self.mshFile = []
   _self.neumann_lines = {}
   _self.dirichlet_lines = {}
   _self.neumann_edges = {}
   _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.neighbors_nodes_linear = {}
-  _self.neighbors_elements_linear = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+  _self.neighborsNodes_linear = {}
+  _self.neighborsElements_linear = {}
+  _self.far_neighborsNodes = {}
+  _self.far_neighborsElements = {}
 
   
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
   
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
   
   for i in range(1, _self.neq + 1):
    _self.neumann_lines[i] = []
@@ -465,38 +414,38 @@ class Mini2D:
 
 
   # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
+  for i in range(0,_self.numPhysical):
    for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
+    if _self.mshFile[5+i][2] == '"neumann' + str(j):
+     _self.neumann_lines[j].append(int(_self.mshFile[5+i][1]))
 
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
+    elif _self.mshFile[5+i][2] == '"dirichlet' + str(j):
+     _self.dirichlet_lines[j].append(int(_self.mshFile[5+i][1]))
 
 
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   # Assembly of the neumann edges and dirichlet points
-  while element_type == 1:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
-    a_3 = int(_self.gmsh[(jj + 10 + ii)][6])
+  while mshFileElementType == 1:
+    a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+    a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
+    a_3 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
     a_4 = [a_1,a_2,a_3]
    
     for i in range(1, _self.neq + 1): 
      if a_1 in _self.neumann_lines[i]:
       _self.neumann_edges[i].append(a_4)
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
      elif a_1 in _self.dirichlet_lines[i]:
       _self.dirichlet_pts[i].append(a_4)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
    
   for i in range(1, _self.neq + 1):
@@ -504,54 +453,54 @@ class Mini2D:
    _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
-  _self.npoints_linear = _self.npoints
-  _self.npoints = _self.npoints_linear + _self.nelem
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
+  _self.numNodes_linear = _self.numNodes
+  _self.numNodes = _self.numNodes_linear + _self.numElements
 
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
+  for i in range(0, _self.numNodes):
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
+   _self.far_neighborsNodes[i] = []
+   _self.far_neighborsElements[i] = []
 
-  for i in range(0, _self.npoints_linear):
-   _self.neighbors_nodes_linear[i] = []
-   _self.neighbors_elements_linear[i] = []
+  for i in range(0, _self.numNodes_linear):
+   _self.neighborsNodes_linear[i] = []
+   _self.neighborsElements_linear[i] = []
  
 
-  _self.ii = ii
-  _self.jj = jj
+  countLine = countLine
+  countLineStart = countLineStart
 
 
  def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
-  _self.y = np.zeros([_self.npoints,1], dtype = float)
-  _self.x_linear = np.zeros([_self.npoints_linear,1], dtype = float)
-  _self.y_linear = np.zeros([_self.npoints_linear,1], dtype = float)
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
+  _self.y = np.zeros([_self.numNodes,1], dtype = float)
+  _self.x_linear = np.zeros([_self.numNodes_linear,1], dtype = float)
+  _self.y_linear = np.zeros([_self.numNodes_linear,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints_linear):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
-   _self.y[i] = _self.gmsh[_self.nphysical + 8 + i][2]
-   _self.x_linear[i] = _self.gmsh[_self.nphysical + 8 + i][1]
-   _self.y_linear[i] = _self.gmsh[_self.nphysical + 8 + i][2]
+  for i in range(0, _self.numNodes_linear):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
+   _self.y[i] = _self.mshFile[_self.numPhysical + 8 + i][2]
+   _self.x_linear[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
+   _self.y_linear[i] = _self.mshFile[_self.numPhysical + 8 + i][2]
    _self.npts.append(i)
 
 
  def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,4], dtype = int)
-  _self.IEN_linear = np.zeros([_self.nelem,3], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
-  _self.GL_linear = len(_self.IEN_linear[0,:])
+  _self.IEN = np.zeros([_self.numElements,4], dtype = int)
+  _self.IEN_linear = np.zeros([_self.numElements,3], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
+  _self.FreedomDegree_linear = len(_self.IEN_linear[0,:])
   length = []
   _self.nodes_linear = []
 
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
-   v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
-   v4 = _self.npoints_linear + e
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
+   v3 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][7]) - 1
+   v4 = _self.numNodes_linear + e
   
    _self.IEN[e] = [v1,v2,v3,v4]
    _self.IEN_linear[e] = [v1,v2,v3]
@@ -564,32 +513,32 @@ class Mini2D:
    _self.nodes_linear.append(v2)  
    _self.nodes_linear.append(v3)  
 
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v3].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v4].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v3].extend(_self.IEN[e])  
+   _self.neighborsNodes[v4].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
-   _self.neighbors_nodes[v3] = list(set(_self.neighbors_nodes[v3]))
-   _self.neighbors_nodes[v4] = list(set(_self.neighbors_nodes[v4]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
+   _self.neighborsNodes[v3] = list(set(_self.neighborsNodes[v3]))
+   _self.neighborsNodes[v4] = list(set(_self.neighborsNodes[v4]))
    
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
-   _self.neighbors_elements[v3].append(e)  
-   _self.neighbors_elements[v4].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
+   _self.neighborsElements[v3].append(e)  
+   _self.neighborsElements[v4].append(e)  
 
-   _self.neighbors_nodes_linear[v1].extend(_self.IEN_linear[e])  
-   _self.neighbors_nodes_linear[v2].extend(_self.IEN_linear[e])  
-   _self.neighbors_nodes_linear[v3].extend(_self.IEN_linear[e])  
+   _self.neighborsNodes_linear[v1].extend(_self.IEN_linear[e])  
+   _self.neighborsNodes_linear[v2].extend(_self.IEN_linear[e])  
+   _self.neighborsNodes_linear[v3].extend(_self.IEN_linear[e])  
    
-   _self.neighbors_nodes_linear[v1] = list(set(_self.neighbors_nodes_linear[v1]))
-   _self.neighbors_nodes_linear[v2] = list(set(_self.neighbors_nodes_linear[v2]))
-   _self.neighbors_nodes_linear[v3] = list(set(_self.neighbors_nodes_linear[v3]))
+   _self.neighborsNodes_linear[v1] = list(set(_self.neighborsNodes_linear[v1]))
+   _self.neighborsNodes_linear[v2] = list(set(_self.neighborsNodes_linear[v2]))
+   _self.neighborsNodes_linear[v3] = list(set(_self.neighborsNodes_linear[v3]))
    
-   _self.neighbors_elements_linear[v1].append(e)  
-   _self.neighbors_elements_linear[v2].append(e)  
-   _self.neighbors_elements_linear[v3].append(e)  
+   _self.neighborsElements_linear[v1].append(e)  
+   _self.neighborsElements_linear[v2].append(e)  
+   _self.neighborsElements_linear[v3].append(e)  
 
    x_a = _self.x[v1] - _self.x[v2]
    x_b = _self.x[v2] - _self.x[v3]
@@ -607,19 +556,19 @@ class Mini2D:
    length.append(length2)
    length.append(length3)
    
-  _self.length_min = min(length)
+  _self.minLengthMesh = min(length)
   _self.nodes_linear = list(set(_self.nodes_linear))  
 
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
+  for i in range(0, _self.numNodes):
+   for j in _self.neighborsNodes[i]:
+    _self.far_neighborsNodes[i].extend(_self.neighborsNodes[j]) 
+    _self.far_neighborsElements[i].extend(_self.neighborsElements[j]) 
  
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
+   _self.far_neighborsNodes[i] = list(set(_self.far_neighborsNodes[i])\
+                                     - set(_self.neighborsNodes[i]))
    
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+   _self.far_neighborsElements[i] = list(set(_self.far_neighborsElements[i])\
+                                        - set(_self.neighborsElements[i]))
 
 
 
@@ -629,25 +578,25 @@ class Quad2D:
  def __init__(_self, _dir, _file, _number_equations):
   _self.name = _dir + '/' + _file
   _self.neq = _number_equations
-  _self.gmsh = []
+  _self.mshFile = []
   _self.neumann_lines = {}
   _self.neumann_edges = {}
   _self.dirichlet_lines = {}
   _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+  _self.far_neighborsNodes = {}
+  _self.far_neighborsElements = {}
 
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
   
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
   
   for i in range(1, _self.neq + 1):
    _self.neumann_lines[i] = []
@@ -657,39 +606,39 @@ class Quad2D:
 
 
   # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
+  for i in range(0,_self.numPhysical):
    for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
+    if _self.mshFile[5+i][2] == '"neumann' + str(j):
+     _self.neumann_lines[j].append(int(_self.mshFile[5+i][1]))
 
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
+    elif _self.mshFile[5+i][2] == '"dirichlet' + str(j):
+     _self.dirichlet_lines[j].append(int(_self.mshFile[5+i][1]))
 
 
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   # Assembly of the neumann edges and dirichlet points
-  while element_type == 8:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
-    a_3 = int(_self.gmsh[(jj + 10 + ii)][6])
-    a_4 = int(_self.gmsh[(jj + 10 + ii)][7])
+  while mshFileElementType == 8:
+    a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+    a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
+    a_3 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
+    a_4 = int(_self.mshFile[(countLineStart + 10 + countLine)][7])
     a_5 = [a_1,a_2,a_3,a_4]
    
     for i in range(1, _self.neq + 1): 
      if a_1 in _self.neumann_lines[i]:
       _self.neumann_edges[i].append(a_5)
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
      elif a_1 in _self.dirichlet_lines[i]:
       _self.dirichlet_pts[i].append(a_5)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
    
   for i in range(1, _self.neq + 1):
@@ -697,67 +646,67 @@ class Quad2D:
    _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
+  for i in range(0, _self.numNodes):
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
+   _self.far_neighborsNodes[i] = []
+   _self.far_neighborsElements[i] = []
 
 
-  _self.ii = ii
-  _self.jj = jj
+  countLine = countLine
+  countLineStart = countLineStart
 
 
  def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
-  _self.y = np.zeros([_self.npoints,1], dtype = float)
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
+  _self.y = np.zeros([_self.numNodes,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
-   _self.y[i] = _self.gmsh[_self.nphysical + 8 + i][2]
+  for i in range(0, _self.numNodes):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
+   _self.y[i] = _self.mshFile[_self.numPhysical + 8 + i][2]
    _self.npts.append(i)
 
 
  def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,6], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
+  _self.IEN = np.zeros([_self.numElements,6], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
   _self.nodes_linear = [] 
   _self.nodes_quad = [] 
   length = [] 
   
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
-   v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
-   v4 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][8]) - 1
-   v5 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][9]) - 1
-   v6 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][10]) - 1
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
+   v3 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][7]) - 1
+   v4 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][8]) - 1
+   v5 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][9]) - 1
+   v6 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][10]) - 1
   
    _self.IEN[e] = [v1,v2,v3,v4,v5,v6]
   
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v3].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v4].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v5].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v6].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v3].extend(_self.IEN[e])  
+   _self.neighborsNodes[v4].extend(_self.IEN[e])  
+   _self.neighborsNodes[v5].extend(_self.IEN[e])  
+   _self.neighborsNodes[v6].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
-   _self.neighbors_nodes[v3] = list(set(_self.neighbors_nodes[v3]))
-   _self.neighbors_nodes[v4] = list(set(_self.neighbors_nodes[v4]))
-   _self.neighbors_nodes[v5] = list(set(_self.neighbors_nodes[v5]))
-   _self.neighbors_nodes[v6] = list(set(_self.neighbors_nodes[v6]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
+   _self.neighborsNodes[v3] = list(set(_self.neighborsNodes[v3]))
+   _self.neighborsNodes[v4] = list(set(_self.neighborsNodes[v4]))
+   _self.neighborsNodes[v5] = list(set(_self.neighborsNodes[v5]))
+   _self.neighborsNodes[v6] = list(set(_self.neighborsNodes[v6]))
    
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
-   _self.neighbors_elements[v3].append(e)  
-   _self.neighbors_elements[v4].append(e)  
-   _self.neighbors_elements[v5].append(e)  
-   _self.neighbors_elements[v6].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
+   _self.neighborsElements[v3].append(e)  
+   _self.neighborsElements[v4].append(e)  
+   _self.neighborsElements[v5].append(e)  
+   _self.neighborsElements[v6].append(e)  
    
    _self.nodes_linear.append(v1)  
    _self.nodes_linear.append(v2)  
@@ -795,47 +744,47 @@ class Quad2D:
    length.append(length5)
    length.append(length6)
    
-  _self.length_min = min(length)
+  _self.minLengthMesh = min(length)
 
   _self.nodes_linear = list(set(_self.nodes_linear))  
   _self.nodes_quad = list(set(_self.nodes_quad))
 
 
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
+  for i in range(0, _self.numNodes):
+   for j in _self.neighborsNodes[i]:
+    _self.far_neighborsNodes[i].extend(_self.neighborsNodes[j]) 
+    _self.far_neighborsElements[i].extend(_self.neighborsElements[j]) 
  
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
+   _self.far_neighborsNodes[i] = list(set(_self.far_neighborsNodes[i])\
+                                     - set(_self.neighborsNodes[i]))
    
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+   _self.far_neighborsElements[i] = list(set(_self.far_neighborsElements[i])\
+                                        - set(_self.neighborsElements[i]))
 
    
 class Cubic2D:
  def __init__(_self, _dir, _file, _number_equations):
   _self.name = _dir + '/' + _file
   _self.neq = _number_equations
-  _self.gmsh = []
+  _self.mshFile = []
   _self.neumann_lines = {}
   _self.neumann_edges = {}
   _self.dirichlet_lines = {}
   _self.dirichlet_pts = {}
-  _self.neighbors_nodes = {}
-  _self.neighbors_elements = {}
-  _self.far_neighbors_nodes = {}
-  _self.far_neighbors_elements = {}
+  _self.neighborsNodes = {}
+  _self.neighborsElements = {}
+  _self.far_neighborsNodes = {}
+  _self.far_neighborsElements = {}
 
   # Converting .msh in a python list
   with open(_self.name) as mesh:
    for line in mesh:
     row = line.split()
-    _self.gmsh.append(row[:])
+    _self.mshFile.append(row[:])
 
   
-  _self.nphysical = int(_self.gmsh[4][0])
-  _self.npoints = int(_self.gmsh[_self.nphysical+7][0])
+  _self.numPhysical = int(_self.mshFile[4][0])
+  _self.numNodes = int(_self.mshFile[_self.numPhysical+7][0])
   
   for i in range(1, _self.neq + 1):
    _self.neumann_lines[i] = []
@@ -845,40 +794,40 @@ class Cubic2D:
 
 
   # Lines classification in neumann or dirichlet
-  for i in range(0,_self.nphysical):
+  for i in range(0,_self.numPhysical):
    for j in range(1,_self.neq + 1):
-    if _self.gmsh[5+i][2] == '"neumann' + str(j):
-     _self.neumann_lines[j].append(int(_self.gmsh[5+i][1]))
+    if _self.mshFile[5+i][2] == '"neumann' + str(j):
+     _self.neumann_lines[j].append(int(_self.mshFile[5+i][1]))
 
-    elif _self.gmsh[5+i][2] == '"dirichlet' + str(j):
-     _self.dirichlet_lines[j].append(int(_self.gmsh[5+i][1]))
+    elif _self.mshFile[5+i][2] == '"dirichlet' + str(j):
+     _self.dirichlet_lines[j].append(int(_self.mshFile[5+i][1]))
 
 
-  jj = _self.nphysical + _self.npoints 
-  ii = 1
-  element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+  countLineStart = _self.numPhysical + _self.numNodes 
+  countLine = 1
+  mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   # Assembly of the neumann edges and dirichlet points
-  while element_type == 26:
-    a_1 = int(_self.gmsh[(jj + 10 + ii)][3])
-    a_2 = int(_self.gmsh[(jj + 10 + ii)][5])
-    a_3 = int(_self.gmsh[(jj + 10 + ii)][6])
-    a_4 = int(_self.gmsh[(jj + 10 + ii)][7])
-    a_5 = int(_self.gmsh[(jj + 10 + ii)][8])
+  while mshFileElementType == 26:
+    a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+    a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
+    a_3 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
+    a_4 = int(_self.mshFile[(countLineStart + 10 + countLine)][7])
+    a_5 = int(_self.mshFile[(countLineStart + 10 + countLine)][8])
     a_6 = [a_1,a_2,a_3,a_4,a_5]
    
     for i in range(1, _self.neq + 1): 
      if a_1 in _self.neumann_lines[i]:
       _self.neumann_edges[i].append(a_6)
  
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
      elif a_1 in _self.dirichlet_lines[i]:
       _self.dirichlet_pts[i].append(a_6)
 
-      ii = ii + 1
-      element_type = int(_self.gmsh[(jj + 10 + ii)][1])
+      countLine = countLine + 1
+      mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
    
   for i in range(1, _self.neq + 1):
@@ -886,83 +835,83 @@ class Cubic2D:
    _self.dirichlet_pts[i] = np.array(_self.dirichlet_pts[i]) 
 
 
-  _self.nelem = int(_self.gmsh[jj + 10][0]) - ii + 1
+  _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
-  for i in range(0, _self.npoints):
-   _self.neighbors_nodes[i] = []
-   _self.neighbors_elements[i] = []
-   _self.far_neighbors_nodes[i] = []
-   _self.far_neighbors_elements[i] = []
+  for i in range(0, _self.numNodes):
+   _self.neighborsNodes[i] = []
+   _self.neighborsElements[i] = []
+   _self.far_neighborsNodes[i] = []
+   _self.far_neighborsElements[i] = []
 
 
-  _self.ii = ii
-  _self.jj = jj
+  countLine = countLine
+  countLineStart = countLineStart
 
 
  def coord(_self):
-  _self.x = np.zeros([_self.npoints,1], dtype = float)
-  _self.y = np.zeros([_self.npoints,1], dtype = float)
+  _self.x = np.zeros([_self.numNodes,1], dtype = float)
+  _self.y = np.zeros([_self.numNodes,1], dtype = float)
   _self.npts = []
 
-  for i in range(0, _self.npoints):  
-   _self.x[i] = _self.gmsh[_self.nphysical + 8 + i][1]
-   _self.y[i] = _self.gmsh[_self.nphysical + 8 + i][2]
+  for i in range(0, _self.numNodes):  
+   _self.x[i] = _self.mshFile[_self.numPhysical + 8 + i][1]
+   _self.y[i] = _self.mshFile[_self.numPhysical + 8 + i][2]
    _self.npts.append(i)
 
 
  def ien(_self):
-  _self.IEN = np.zeros([_self.nelem,10], dtype = int)
-  _self.GL = len(_self.IEN[0,:])
+  _self.IEN = np.zeros([_self.numElements,10], dtype = int)
+  _self.FreedomDegree = len(_self.IEN[0,:])
   _self.nodes_linear = [] 
   _self.nodes_quad = [] 
   length = [] 
   
-  for e in range(0, _self.nelem):
-   v1 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][5]) - 1
-   v2 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][6]) - 1
-   v3 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][7]) - 1
-   v4 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][8]) - 1
-   v5 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][9]) - 1
-   v6 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][10]) - 1
-   v7 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][11]) - 1
-   v8 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][12]) - 1
-   v9 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][13]) - 1
-   v10 = int(_self.gmsh[(_self.jj + 10 + _self.ii + e)][14]) - 1
+  for e in range(0, _self.numElements):
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][5]) - 1
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][6]) - 1
+   v3 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][7]) - 1
+   v4 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][8]) - 1
+   v5 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][9]) - 1
+   v6 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][10]) - 1
+   v7 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][11]) - 1
+   v8 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][12]) - 1
+   v9 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][13]) - 1
+   v10 = int(_self.mshFile[(countLineStart + 10 + countLine + e)][14]) - 1
   
    _self.IEN[e] = [v1,v2,v3,v4,v5,v6,v7,v8,v9,v10]
   
-   _self.neighbors_nodes[v1].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v2].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v3].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v4].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v5].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v6].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v7].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v8].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v9].extend(_self.IEN[e])  
-   _self.neighbors_nodes[v10].extend(_self.IEN[e])  
+   _self.neighborsNodes[v1].extend(_self.IEN[e])  
+   _self.neighborsNodes[v2].extend(_self.IEN[e])  
+   _self.neighborsNodes[v3].extend(_self.IEN[e])  
+   _self.neighborsNodes[v4].extend(_self.IEN[e])  
+   _self.neighborsNodes[v5].extend(_self.IEN[e])  
+   _self.neighborsNodes[v6].extend(_self.IEN[e])  
+   _self.neighborsNodes[v7].extend(_self.IEN[e])  
+   _self.neighborsNodes[v8].extend(_self.IEN[e])  
+   _self.neighborsNodes[v9].extend(_self.IEN[e])  
+   _self.neighborsNodes[v10].extend(_self.IEN[e])  
    
-   _self.neighbors_nodes[v1] = list(set(_self.neighbors_nodes[v1]))
-   _self.neighbors_nodes[v2] = list(set(_self.neighbors_nodes[v2]))
-   _self.neighbors_nodes[v3] = list(set(_self.neighbors_nodes[v3]))
-   _self.neighbors_nodes[v4] = list(set(_self.neighbors_nodes[v4]))
-   _self.neighbors_nodes[v5] = list(set(_self.neighbors_nodes[v5]))
-   _self.neighbors_nodes[v6] = list(set(_self.neighbors_nodes[v6]))
-   _self.neighbors_nodes[v7] = list(set(_self.neighbors_nodes[v7]))
-   _self.neighbors_nodes[v8] = list(set(_self.neighbors_nodes[v8]))
-   _self.neighbors_nodes[v9] = list(set(_self.neighbors_nodes[v9]))
-   _self.neighbors_nodes[v10] = list(set(_self.neighbors_nodes[v10]))
+   _self.neighborsNodes[v1] = list(set(_self.neighborsNodes[v1]))
+   _self.neighborsNodes[v2] = list(set(_self.neighborsNodes[v2]))
+   _self.neighborsNodes[v3] = list(set(_self.neighborsNodes[v3]))
+   _self.neighborsNodes[v4] = list(set(_self.neighborsNodes[v4]))
+   _self.neighborsNodes[v5] = list(set(_self.neighborsNodes[v5]))
+   _self.neighborsNodes[v6] = list(set(_self.neighborsNodes[v6]))
+   _self.neighborsNodes[v7] = list(set(_self.neighborsNodes[v7]))
+   _self.neighborsNodes[v8] = list(set(_self.neighborsNodes[v8]))
+   _self.neighborsNodes[v9] = list(set(_self.neighborsNodes[v9]))
+   _self.neighborsNodes[v10] = list(set(_self.neighborsNodes[v10]))
    
-   _self.neighbors_elements[v1].append(e)  
-   _self.neighbors_elements[v2].append(e)  
-   _self.neighbors_elements[v3].append(e)  
-   _self.neighbors_elements[v4].append(e)  
-   _self.neighbors_elements[v5].append(e)  
-   _self.neighbors_elements[v6].append(e)  
-   _self.neighbors_elements[v7].append(e)  
-   _self.neighbors_elements[v8].append(e)  
-   _self.neighbors_elements[v9].append(e)  
-   _self.neighbors_elements[v10].append(e)  
+   _self.neighborsElements[v1].append(e)  
+   _self.neighborsElements[v2].append(e)  
+   _self.neighborsElements[v3].append(e)  
+   _self.neighborsElements[v4].append(e)  
+   _self.neighborsElements[v5].append(e)  
+   _self.neighborsElements[v6].append(e)  
+   _self.neighborsElements[v7].append(e)  
+   _self.neighborsElements[v8].append(e)  
+   _self.neighborsElements[v9].append(e)  
+   _self.neighborsElements[v10].append(e)  
    
    _self.nodes_linear.append(v1)  
    _self.nodes_linear.append(v2)  
@@ -992,20 +941,20 @@ class Cubic2D:
    length.append(length2)
    length.append(length3)
    
-  _self.length_min = min(length)
+  _self.minLengthMesh = min(length)
 
   _self.nodes_linear = list(set(_self.nodes_linear))  
   _self.nodes_quad = list(set(_self.nodes_quad))
 
 
-  for i in range(0, _self.npoints):
-   for j in _self.neighbors_nodes[i]:
-    _self.far_neighbors_nodes[i].extend(_self.neighbors_nodes[j]) 
-    _self.far_neighbors_elements[i].extend(_self.neighbors_elements[j]) 
+  for i in range(0, _self.numNodes):
+   for j in _self.neighborsNodes[i]:
+    _self.far_neighborsNodes[i].extend(_self.neighborsNodes[j]) 
+    _self.far_neighborsElements[i].extend(_self.neighborsElements[j]) 
  
-   _self.far_neighbors_nodes[i] = list(set(_self.far_neighbors_nodes[i])\
-                                     - set(_self.neighbors_nodes[i]))
+   _self.far_neighborsNodes[i] = list(set(_self.far_neighborsNodes[i])\
+                                     - set(_self.neighborsNodes[i]))
    
-   _self.far_neighbors_elements[i] = list(set(_self.far_neighbors_elements[i])\
-                                        - set(_self.neighbors_elements[i]))
+   _self.far_neighborsElements[i] = list(set(_self.far_neighborsElements[i])\
+                                        - set(_self.neighborsElements[i]))
 
