@@ -15,7 +15,7 @@
 
 import sys
 import numpy as np
-import gaussian_quadrature
+import gaussianQuadrature
 import scipy.sparse as sps
 from tqdm import tqdm
 

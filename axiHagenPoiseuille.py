@@ -6,7 +6,7 @@ import os
 initial_path = os.getcwd()
 
 import sys
-folderClass = './lib_class'
+folderClass = './libClass'
 sys.path.insert(0, folderClass)
 
 from tqdm import tqdm
@@ -16,13 +16,13 @@ import numpy as np
 import scipy.sparse as sps
 import scipy.sparse.linalg
 
-import search_file
-import import_msh
+import searchMSH
+import importMSH
 import assembly
-import benchmark_problems
-import import_vtk
-import semi_lagrangian
-import export_vtk
+import benchmarkProblems
+import importVTK
+import semiLagrangian
+import exportVTK
 import relatory
 
 
@@ -89,51 +89,51 @@ start_time = time()
 
 # Linear Element
 if polynomial_option == 1:
- mshFileName = 'malha_hagen_poiseuillev2.msh'
+ mshFileName = 'linearHagenPoiseuille.msh'
 
- pathMSHFile = search_file.Find(mshFileName)
+ pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
 
- mesh = import_msh.Linear2D(pathMSHFile, mshFileName)
+ mesh = importMSH.Linear2D(pathMSHFile, mshFileName)
 
 
 # Mini Element
 elif polynomial_option == 2:
- mshFileName = 'malha_hagen_poiseuille.msh'
+ mshFileName = 'linearHagenPoiseuille.msh'
  equation_number = 3
 
- pathMSHFile = search_file.Find(mshFileName)
+ pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
 
- mesh = import_msh.Mini2D(pathMSHFile, mshFileName, equation_number)
+ mesh = importMSH.Mini2D(pathMSHFile, mshFileName, equation_number)
  mesh.coord()
  mesh.ien()
 
 # Quad Element
 elif polynomial_option == 3:
- mshFileName = 'malha_hagen_poiseuille_quad.msh'
+ mshFileName = 'quadHagenPoiseuille.msh'
  equation_number = 3
  
- pathMSHFile = search_file.Find(mshFileName)
+ pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
 
- mesh = import_msh.Quad2D(pathMSHFile, mshFileName, equation_number)
+ mesh = importMSH.Quad2D(pathMSHFile, mshFileName, equation_number)
  mesh.coord()
  mesh.ien()
 
 # Cubic Element
 elif polynomial_option == 4:
- mshFileName = 'malha_hagen_poiseuille_cubic.msh'
+ mshFileName = 'cubicHagenPoiseuille.msh'
  equation_number = 3
 
- pathMSHFile = search_file.Find(mshFileName)
+ pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
 
- mesh = import_msh.Cubic2D(pathMSHFile, mshFileName, equation_number)
+ mesh = importMSH.Cubic2D(pathMSHFile, mshFileName, equation_number)
  mesh.coord()
  mesh.ien()
 
@@ -145,6 +145,7 @@ z                      = mesh.x
 r                      = mesh.y
 IEN                    = mesh.IEN
 boundaryEdges          = mesh.boundaryEdges
+boundaryNodes          = mesh.boundaryNodes
 neighborsNodes         = mesh.neighborsNodes
 neighborsElements      = mesh.neighborsElements
 minLengthMesh          = mesh.minLengthMesh
@@ -195,25 +196,22 @@ if polynomial_option == 1:
 
  # Applying vz condition
  zVelocityLHS0 = sps.lil_matrix.copy(Mr)
- zVelocityBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ zVelocityBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  zVelocityBC.zVelocityCondition(boundaryEdges,zVelocityLHS0,neighborsNodes)
- vorticityDirichletNodes = zVelocityBC.dirichletNodes
  benchmark_problem = zVelocityBC.benchmark_problem
 
  # Applying vr condition
  rVelocityLHS0 = sps.lil_matrix.copy(Mr)
- rVelocityBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ rVelocityBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  rVelocityBC.rVelocityCondition(boundaryEdges,zVelocityLHS0,neighborsNodes)
  
  # Applying psi condition
  streamFunctionLHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
- streamFunctionBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ streamFunctionBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  streamFunctionBC.streamFunctionCondition(boundaryEdges,streamFunctionLHS0,neighborsNodes)
 
  # Applying vorticity condition
- #condition_vorticity = benchmark_problems.axiHagen_Poiseuille(numPhysical,numNodes,z,r)
- #condition_vorticity.vorticitycondition(boundaryEdges[4])
- #vorticityDirichletNodes = condition_vorticity.dirichletNodes
+ vorticityDirichletNodes = boundaryNodes
 
 
 
@@ -222,23 +220,23 @@ elif polynomial_option == 2:
 
  # Applying vz condition
  zVelocityLHS0 = sps.lil_matrix.copy(Mr)
- zVelocityBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ zVelocityBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  zVelocityBC.zVelocityProfile_condition(boundaryEdges[1],zVelocityLHS0,neighborsNodes)
  vorticityDirichletNodes = zVelocityBC.dirichletNodes
  benchmark_problem = zVelocityBC.benchmark_problem
 
  # Applying vr condition
  rVelocityLHS0 = sps.lil_matrix.copy(Mr)
- rVelocityBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ rVelocityBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  rVelocityBC.rVelocityProfile_condition(boundaryEdges[2],zVelocityLHS0,neighborsNodes)
  
  # Applying psi condition
  streamFunctionLHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
- streamFunctionBC = benchmark_problems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
+ streamFunctionBC = benchmarkProblems.axiHagenPoiseuille(numPhysical,numNodes,z,r)
  streamFunctionBC.streamFunctioncondition(boundaryEdges[3],streamFunctionLHS0,neighborsNodes)
 
  # Applying vorticity condition
- #condition_vorticity = benchmark_problems.axiHagen_Poiseuille(numPhysical,numNodes,z,r)
+ #condition_vorticity = benchmarkProblems.axiHagen_Poiseuille(numPhysical,numNodes,z,r)
  #condition_vorticity.vorticitycondition(boundaryEdges[4])
  #vorticityDirichletNodes = condition_vorticity.dirichletNodes
 
@@ -250,23 +248,23 @@ elif polynomial_option == 3:
 
  # Applying vz condition
  zVelocityLHS0 = sps.lil_matrix.copy(Mr)
- zVelocityBC = benchmark_problems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
+ zVelocityBC = benchmarkProblems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
  zVelocityBC.zVelocityProfile_condition(boundaryEdges[1],zVelocityLHS0,neighborsNodes)
  vorticityDirichletNodes = zVelocityBC.dirichletNodes
  benchmark_problem = zVelocityBC.benchmark_problem
 
  # Applying vr condition
  rVelocityLHS0 = sps.lil_matrix.copy(Mr)
- rVelocityBC = benchmark_problems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
+ rVelocityBC = benchmarkProblems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
  rVelocityBC.rVelocityProfile_condition(boundaryEdges[2],zVelocityLHS0,neighborsNodes)
  
  # Applying psi condition
  streamFunctionLHS0 = sps.lil_matrix.copy(Kzzr) + sps.lil_matrix.copy(Krrr) + 2.0*sps.lil_matrix.copy(Gr)
- streamFunctionBC = benchmark_problems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
+ streamFunctionBC = benchmarkProblems.axiQuadHagenPoiseuille(numPhysical,numNodes,z,r)
  streamFunctionBC.streamFunctioncondition(boundaryEdges[3],streamFunctionLHS0,neighborsNodes)
 
  # Applying vorticity condition
- #condition_vorticity = benchmark_problems.axiQuadHagen_Poiseuille(numPhysical,numNodes,z,r)
+ #condition_vorticity = benchmarkProblems.axiQuadHagen_Poiseuille(numPhysical,numNodes,z,r)
  #condition_vorticity.vorticitycondition(boundaryEdges[4])
  #vorticityDirichletNodes = condition_vorticity.dirichletNodes
 # ---------------------------------------------------------------------------------
@@ -303,7 +301,7 @@ psi = psi[0].reshape((len(psi[0]),1))
 
 
 # -------------------------- Import VTK File ------------------------------------
-#numNodes, numElements, IEN, z, r, vz, vr, w, w, psi = import_vtk.vtkfile_linear("/home/marquesleandro/axiHagenPoiseuille/results/linear8/linear8290.vtk")
+#numNodes, numElements, IEN, z, r, vz, vr, w, w, psi = importVTK.vtkfile_linear("/home/marquesleandro/axiHagenPoiseuille/results/linear8/linear8290.vtk")
 #----------------------------------------------------------------------------------
 
 
@@ -352,13 +350,13 @@ os.chdir(initial_path)
 # ------------------------ Export VTK File ---------------------------------------
 # Linear and Mini Elements
 if polynomial_option == 1 or polynomial_option == 2:   
- save = export_vtk.Linear2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
+ save = exportVTK.Linear2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
  save.create_dir(folderResults)
  save.saveVTK(folderResults + str(0))
 
 # Quad Element
 elif polynomial_option == 3:   
- save = export_vtk.Quad2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
+ save = exportVTK.Quad2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
  save.create_dir(folderResults)
  save.saveVTK(folderResults + str(0))
 # ---------------------------------------------------------------------------------
@@ -473,7 +471,7 @@ for t in tqdm(range(1, nt)):
   if polynomial_option == 1:
    scheme_name = 'Semi Lagrangian Linear'
 
-   w_d = semi_lagrangian.Linear2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
+   w_d = semiLagrangian.Linear2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
 
    A = np.copy(Mr)/dt
    vorticityRHS = sps.lil_matrix.dot(A,w_d)
@@ -491,7 +489,7 @@ for t in tqdm(range(1, nt)):
   elif polynomial_option == 2:
    scheme_name = 'Semi Lagrangian Mini'
 
-   w_d = semi_lagrangian.Mini2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
+   w_d = semiLagrangian.Mini2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
 
    A = np.copy(Mr)/dt
    vorticityRHS = sps.lil_matrix.dot(A,w_d)
@@ -509,7 +507,7 @@ for t in tqdm(range(1, nt)):
   elif polynomial_option == 3:
    scheme_name = 'Semi Lagrangian Quad'
 
-   w_d = semi_lagrangian.Quad2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
+   w_d = semiLagrangian.Quad2D(numNodes, neighborsElements, IEN, z, r, vz, vr, dt, w)
 
    A = np.copy(Mr)/dt
    vorticityRHS = sps.lil_matrix.dot(A,w_d)
@@ -573,13 +571,13 @@ for t in tqdm(range(1, nt)):
 
  # Linear and Mini Elements
  if polynomial_option == 1 or polynomial_option == 2:   
-  save = export_vtk.Linear2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
+  save = exportVTK.Linear2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
   save.create_dir(folderResults)
   save.saveVTK(folderResults + str(t))
 
  # Quad Element
  elif polynomial_option == 3:   
-  save = export_vtk.Quad2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
+  save = exportVTK.Quad2D(z,r,IEN,numNodes,numElements,w,w,psi,vz,vr)
   save.create_dir(folderResults)
   save.saveVTK(folderResults + str(t))
 
@@ -594,11 +592,9 @@ for t in tqdm(range(1, nt)):
 
 
  # ------------------------ CHECK STEADY STATE ----------------------------------
- #vz_dif = np.sqrt((vz-vz_old)**2)
- #vr_dif = np.sqrt((vr-vr_old)**2)
- #if np.all(vz_dif < 1e-50) and np.all(vr_dif < 1e-50):
- # end_type = 1
- # break
+ if np.all(vz == vz_old) and np.all(vr == vr_old):
+  end_type = 1
+  break
  # ---------------------------------------------------------------------------------
 
  # ------------------------ CHECK CONVERGENCE RESULT ----------------------------------

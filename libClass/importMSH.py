@@ -284,6 +284,7 @@ class Linear2D:
   _self.name = _dir + '/' + _file
   _self.mshFile = []
   _self.boundaryEdges = []
+  _self.boundaryNodes = []
   _self.neighborsNodes = {}
   _self.neighborsElements = {}
 
@@ -306,17 +307,19 @@ class Linear2D:
   mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
 
   while mshFileElementType == 1:
-   a_1 = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
-   a_2 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
-   a_3 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
-   a_4 = [a_1,a_2,a_3]
+   line = int(_self.mshFile[(countLineStart + 10 + countLine)][3])
+   v1 = int(_self.mshFile[(countLineStart + 10 + countLine)][5])
+   v2 = int(_self.mshFile[(countLineStart + 10 + countLine)][6])
    
-   _self.boundaryEdges.append(a_4)
- 
+   _self.boundaryEdges.append([line,v1,v2])
+   _self.boundaryNodes.append(v1)
+   _self.boundaryNodes.append(v2)
+
    countLine = countLine + 1
    mshFileElementType = int(_self.mshFile[(countLineStart + 10 + countLine)][1])
  
   _self.boundaryEdges = np.array(_self.boundaryEdges) 
+  _self.boundaryNodes = list(set(_self.boundaryNodes))
   _self.numElements = int(_self.mshFile[countLineStart + 10][0]) - countLine + 1
 
 
@@ -376,6 +379,8 @@ class Linear2D:
    length.append(length3)
    
   _self.minLengthMesh = min(length)
+
+
 
 
 
