@@ -211,7 +211,8 @@ if polynomial_option == 1:
  streamFunctionBC.streamFunctionCondition(boundaryEdges,streamFunctionLHS0,neighborsNodes)
 
  # Applying vorticity condition
- vorticityDirichletNodes = boundaryNodes
+ vorticityDirichletNodes = zVelocityBC.dirichletNodes
+ #vorticityDirichletNodes = boundaryNodes
 
 
 
