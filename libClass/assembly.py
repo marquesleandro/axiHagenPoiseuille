@@ -200,7 +200,7 @@ def Element2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _x, _y, _GAUSSPOI
  return Kxx, Kxy, Kyx, Kyy, K, M, MLump, Gx, Gy, polynomial_order
 
 
-def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSSPOINTS):
+def AxiElement2D(_simulation_option, _polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSSPOINTS):
 
  Kzzr = sps.lil_matrix((_npoints,_npoints), dtype = float)
  Krrr = sps.lil_matrix((_npoints,_npoints), dtype = float)
@@ -214,113 +214,128 @@ def AxiElement2D(_polynomial_option, _GL, _npoints, _nelem, _IEN, _z, _r, _GAUSS
 
  element2D = gaussianQuadrature.AxiElement2D(_z, _r, _IEN, _GAUSSPOINTS)
  
- if _polynomial_option == 1:
-  polynomial_order = 'Linear Element'
-  
-  for e in tqdm(range(0, _nelem)):
-   element2D.linear(e)
-
-   v1 = _IEN[e][0]
-   v2 = _IEN[e][1]
-   v3 = _IEN[e][2]
-
-   r_elem = (_r[v1] + _r[v2] + _r[v3])/3.0
-
-
-   for i in range(0,_GL): 
-    ii = _IEN[e][i]
-  
-    for j in range(0,_GL):
-     jj = _IEN[e][j]
-
-     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
-     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+ if _simulation_option == 1:
+  if _polynomial_option == 1:
+   polynomial_order = 'Linear Element'
    
-     Mr[ii,jj] += r_elem*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
-
-     Gr[ii,jj] += element2D.gr[i][j]
-     Gz[ii,jj] += element2D.gz[i][j]
-     Grr[ii,jj] += r_elem*element2D.gr[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
-
-
-
- elif _polynomial_option == 2:
-  polynomial_order = 'Mini Element'
-  
-  for e in tqdm(range(0, _nelem)):
-   element2D.mini(e)
-
-   v1 = _IEN[e][0]
-   v2 = _IEN[e][1]
-   v3 = _IEN[e][2]
-   v4 = _IEN[e][3]
-
-   r_elem = (_r[v1] + _r[v2] + _r[v3] + _r[v4])/4.0
-
-
-   for i in range(0,_GL): 
-    ii = _IEN[e][i]
-  
-    for j in range(0,_GL):
-     jj = _IEN[e][j]
-
-     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
-     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+   for e in tqdm(range(0, _nelem)):
+    element2D.linear(e)
+ 
+    v1 = _IEN[e][0]
+    v2 = _IEN[e][1]
+    v3 = _IEN[e][2]
+ 
+    r_elem = (_r[v1] + _r[v2] + _r[v3])/3.0
+ 
+ 
+    for i in range(0,_GL): 
+     ii = _IEN[e][i]
    
-     Mr[ii,jj] += r_elem*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
-
-     Gr[ii,jj] += element2D.gr[i][j]
-     Gz[ii,jj] += element2D.gz[i][j]
-     Grr[ii,jj] += r_elem*element2D.gr[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
-
-
-
- elif _polynomial_option == 3:
-  polynomial_order = 'Quad Element'
-  
-  for e in tqdm(range(0, _nelem)):
-   element2D.quadratic(e)
-
-   v1 = _IEN[e][0]
-   v2 = _IEN[e][1]
-   v3 = _IEN[e][2]
-   v4 = _IEN[e][3]
-   v5 = _IEN[e][4]
-   v6 = _IEN[e][5]
-
-   r_elem = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
-  
-   for i in range(0,_GL): 
-    ii = _IEN[e][i]
-  
-    for j in range(0,_GL):
-     jj = _IEN[e][j]
-
-     Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
-     Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+     for j in range(0,_GL):
+      jj = _IEN[e][j]
+ 
+      Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+      Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+    
+      Mr[ii,jj] += r_elem*element2D.mass[i][j]
+      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
+ 
+      Gr[ii,jj] += element2D.gr[i][j]
+      Gz[ii,jj] += element2D.gz[i][j]
+      Grr[ii,jj] += r_elem*element2D.gr[i][j]
+      Gzr[ii,jj] += r_elem*element2D.gz[i][j]
+ 
+ 
+ 
+  elif _polynomial_option == 2:
+   polynomial_order = 'Mini Element'
    
-     Mr[ii,jj] += r_elem*element2D.mass[i][j]
-     M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
-     Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
+   for e in tqdm(range(0, _nelem)):
+    element2D.mini(e)
+ 
+    v1 = _IEN[e][0]
+    v2 = _IEN[e][1]
+    v3 = _IEN[e][2]
+    v4 = _IEN[e][3]
+ 
+    r_elem = (_r[v1] + _r[v2] + _r[v3] + _r[v4])/4.0
+ 
+ 
+    for i in range(0,_GL): 
+     ii = _IEN[e][i]
+   
+     for j in range(0,_GL):
+      jj = _IEN[e][j]
+ 
+      Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+      Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+    
+      Mr[ii,jj] += r_elem*element2D.mass[i][j]
+      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
+ 
+      Gr[ii,jj] += element2D.gr[i][j]
+      Gz[ii,jj] += element2D.gz[i][j]
+      Grr[ii,jj] += r_elem*element2D.gr[i][j]
+      Gzr[ii,jj] += r_elem*element2D.gz[i][j]
+ 
+ 
+ 
+  elif _polynomial_option == 3:
+   polynomial_order = 'Quad Element'
+   
+   for e in tqdm(range(0, _nelem)):
+    element2D.quadratic(e)
+ 
+    v1 = _IEN[e][0]
+    v2 = _IEN[e][1]
+    v3 = _IEN[e][2]
+    v4 = _IEN[e][3]
+    v5 = _IEN[e][4]
+    v6 = _IEN[e][5]
+ 
+    r_elem = (_r[v1] + _r[v2] + _r[v3] + _r[v4] + _r[v5] + _r[v6])/6.0
+   
+    for i in range(0,_GL): 
+     ii = _IEN[e][i]
+   
+     for j in range(0,_GL):
+      jj = _IEN[e][j]
+ 
+      Kzzr[ii,jj] += r_elem*element2D.kzz[i][j]
+      Krrr[ii,jj] += r_elem*element2D.krr[i][j]
+    
+      Mr[ii,jj] += r_elem*element2D.mass[i][j]
+      M1r[ii,jj] += (1.0/r_elem)*element2D.mass[i][j]
+      Mr2[ii,jj] += (r_elem**2)*element2D.mass[i][j]
+ 
+      Gr[ii,jj] += element2D.gr[i][j]
+      Gz[ii,jj] += element2D.gz[i][j]
+      Grr[ii,jj] += r_elem*element2D.gr[i][j]
+      Gzr[ii,jj] += r_elem*element2D.gz[i][j]
+ 
+ 
+  else:
+   print ""
+   print " Error: Element type not found"
+   print ""
+   sys.exit()
 
-     Gr[ii,jj] += element2D.gr[i][j]
-     Gz[ii,jj] += element2D.gz[i][j]
-     Grr[ii,jj] += r_elem*element2D.gr[i][j]
-     Gzr[ii,jj] += r_elem*element2D.gz[i][j]
-
-
-
- else:
-  print ""
-  print " Error: Element type not found"
-  print ""
-  sys.exit()
+ 
+ #Debug
+ elif _simulation_option == 2:
+  polynomial_order = 'Debug'
+  Kzzr = Kzzr*1.0  
+  Krrr = Krrr*1.0
+  Mr   = Mr*1.0
+  M1r  = M1r*1.0
+  Mr2  = Mr2*1.0
+  Gr   = Gr*1.0
+  Gz   = Gz*1.0
+  Grr  = Grr*1.0  
+  Gzr  = Gzr*1.0
+ 
 
 
  return Kzzr, Krrr, Mr, M1r, Mr2, Gr, Gz, Grr, Gzr, polynomial_order
